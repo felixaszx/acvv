@@ -19,6 +19,21 @@
             }
         },
         {
+            "type": "shell",
+            "label": "glslc",
+            "detail": "Compile vulkan shaders",
+            "command": "${workspaceFolder}/res/shader/shader.bat",
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false,
+            }
+        },
+        {
             "type": "cmake",
             "label": "CMake: configure",
             "command": "configure",
@@ -30,7 +45,7 @@
                 "focus": false,
                 "panel": "shared",
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         },
         {
@@ -38,7 +53,8 @@
             "label": "CMake: build",
             "command": "build",
             "dependsOn": [
-                "CMake: configure"
+                "CMake: configure",
+                "glslc"
             ],
             "targets": [
                 "all"
@@ -52,7 +68,7 @@
                 "focus": false,
                 "panel": "shared",
                 "showReuseMessage": false,
-                "clear": true
+                "clear": false
             }
         }
     ]
