@@ -67,8 +67,12 @@ class App
 
     void create_instance();
     void setup_physical_device();
+
     void setup_swapchain();
     void setup_swapchain_imageview();
+
+    void setup_graphic_pipeline();
 };
+
 
 #endif // APP_HPP
