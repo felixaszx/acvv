@@ -1,12 +1,31 @@
 #include "app.hpp"
 
-void App::init_vulkan()
+bool check_validation_layer()
 {
-    create_instance();
-}
+    uint32_t layer_count;
+    vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
+    std::vector<VkLayerProperties> layer_present(layer_count);
+    vkEnumerateInstanceLayerProperties(&layer_count, layer_present.data());
 
-void App::cleanup()
-{
+    for (const char* layer_name : VALIDATION_LAYERS)
+    {
+        bool layer_found = false;
+        for (const auto& layer_properties : layer_present)
+        {
+            if (!strcmp(layer_name, layer_properties.layerName))
+            {
+                layer_found = true;
+                break;
+            }
+        }
+
+        if (!layer_found)
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 std::vector<const char*> get_required_exts()
@@ -17,7 +36,7 @@ std::vector<const char*> get_required_exts()
 
     std::vector<const char*> exts(glfwExts, glfwExts + glfwExtCount);
 
-    if (enableValidationLayers)
+    if (ENABLE_VALIDATION_LAYERS)
     {
         exts.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
@@ -25,8 +44,39 @@ std::vector<const char*> get_required_exts()
     return exts;
 }
 
+static VKAPI_ATTR VkBool32 VKAPI_CALL debug_cb(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                                               VkDebugUtilsMessageTypeFlagsEXT messageType,
+                                               const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+                                               void* pUserData)
+{
+
+    if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)
+    {
+        std::cerr << "[Vulkan Validation Layer] " << pCallbackData->pMessage << std::endl;
+    }
+
+    return VK_FALSE;
+}
+
+void App::init_vulkan()
+{
+    create_instance();
+}
+
+void App::cleanup()
+{
+    vk::DispatchLoaderDynamic instance_loader(instance_, vkGetInstanceProcAddr);
+    instance_.destroyDebugUtilsMessengerEXT(debug_messenger_, nullptr, instance_loader);
+    instance_.destroy();
+}
+
 void App::create_instance()
 {
+    if (ENABLE_VALIDATION_LAYERS && !check_validation_layer())
+    {
+        throw std::runtime_error("validation layer not avaliable\n");
+    }
+
     vk::ApplicationInfo app_info{};
     app_info.pApplicationName = "vk app";
     app_info.pApplicationName = "vk app";
@@ -35,20 +85,34 @@ void App::create_instance()
     app_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     app_info.apiVersion = VK_API_VERSION_1_3;
 
+    vk::DebugUtilsMessengerCreateInfoEXT debug_info;
+    debug_info.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | //
+                                 vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning;
+    debug_info.messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
+                             vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance |
+                             vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation;
+    debug_info.pfnUserCallback = debug_cb;
+
     vk::InstanceCreateInfo create_info{};
     create_info.pApplicationInfo = &app_info;
 
     auto exts = get_required_exts();
     create_info.enabledExtensionCount = (uint32_t)exts.size();
     create_info.ppEnabledExtensionNames = exts.data();
-    create_info.enabledLayerCount = 0;
 
-    try
+    if (ENABLE_VALIDATION_LAYERS)
     {
-        instance_ = vk::createInstance(create_info, nullptr);
+        create_info.enabledLayerCount = static_cast<uint32_t>(VALIDATION_LAYERS.size());
+        create_info.ppEnabledLayerNames = VALIDATION_LAYERS.data();
+        create_info.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debug_info;
     }
-    catch (vk::SystemError err)
+    else
     {
-        std::cerr << "[vk System Error] " << err.what() << std::endl;
+        create_info.enabledLayerCount = 0;
     }
+
+    VK_CHECK(instance_ = vk::createInstance(create_info, nullptr));
+
+    vk::DispatchLoaderDynamic instance_loader(instance_, vkGetInstanceProcAddr);
+    VK_CHECK(debug_messenger_ = instance_.createDebugUtilsMessengerEXT(debug_info, nullptr, instance_loader));
 }

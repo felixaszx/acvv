@@ -9,19 +9,31 @@
 #include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <fmt/core.h>
 
 inline const int WIDTH = 1200;
 inline const int HEIGHT = 900;
 inline const int MAX_FRAMES_IN_FLIGHT = 2;
 
-inline const std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation"};
-inline const std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+inline const std::vector<const char*> VALIDATION_LAYERS = {"VK_LAYER_KHRONOS_validation"};
+inline const std::vector<const char*> DEVICE_EXTS = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 #ifdef NDEBUG
-inline const bool enableValidationLayers = false;
+inline const bool ENABLE_VALIDATION_LAYERS = false;
 #else
-inline const bool enableValidationLayers = true;
+inline const bool ENABLE_VALIDATION_LAYERS = true;
 #endif
+
+#define VK_CHECK(x)                                                       \
+    try                                                                   \
+    {                                                                     \
+        x;                                                                \
+    }                                                                     \
+    catch (vk::SystemError err)                                           \
+    {                                                                     \
+        std::cerr << "[Vulkan System Error] " << err.what() << std::endl; \
+        throw;                                                            \
+    }
 
 class App
 {
@@ -29,6 +41,7 @@ class App
     GLFWwindow* window;
 
     vk::Instance instance_;
+    vk::DebugUtilsMessengerEXT debug_messenger_;
 
   public:
     void run();
@@ -38,6 +51,7 @@ class App
     void cleanup();
 
     void create_instance();
+    void setup_debug_messenger();
 };
 
 #endif // APP_HPP
