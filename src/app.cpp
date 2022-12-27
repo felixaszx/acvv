@@ -8,14 +8,6 @@ void App::run()
     cleanup();
 }
 
-void App::main_loop()
-{
-    while (!glfwWindowShouldClose(window))
-    {
-        glfwPollEvents();
-    }
-}
-
 void App::init_window()
 {
     glfwInit();
@@ -24,4 +16,25 @@ void App::init_window()
 
     window = glfwCreateWindow(WIDTH, HEIGHT, "vk", nullptr, nullptr);
     glfwSetWindowUserPointer(window, this);
+}
+
+void App::init_vulkan()
+{
+    create_instance();
+    setup_physical_device();
+}
+
+void App::cleanup()
+{
+    vk::DispatchLoaderDynamic instance_loader(instance_, vkGetInstanceProcAddr);
+    instance_.destroyDebugUtilsMessengerEXT(debug_messenger_, nullptr, instance_loader);
+    instance_.destroy();
+}
+
+void App::main_loop()
+{
+    while (!glfwWindowShouldClose(window))
+    {
+        glfwPollEvents();
+    }
 }

@@ -43,6 +43,9 @@ class App
     vk::Instance instance_;
     vk::DebugUtilsMessengerEXT debug_messenger_;
 
+    vk::PhysicalDevice physical_device_;
+    vk::Device device_;
+
   public:
     void run();
     void init_window();
@@ -51,7 +54,8 @@ class App
     void cleanup();
 
     void create_instance();
-    void setup_debug_messenger();
+    void setup_physical_device();
 };
+
 
 #endif // APP_HPP

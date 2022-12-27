@@ -58,18 +58,6 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_cb(VkDebugUtilsMessageSeverityFlagBi
     return VK_FALSE;
 }
 
-void App::init_vulkan()
-{
-    create_instance();
-}
-
-void App::cleanup()
-{
-    vk::DispatchLoaderDynamic instance_loader(instance_, vkGetInstanceProcAddr);
-    instance_.destroyDebugUtilsMessengerEXT(debug_messenger_, nullptr, instance_loader);
-    instance_.destroy();
-}
-
 void App::create_instance()
 {
     if (ENABLE_VALIDATION_LAYERS && !check_validation_layer())
@@ -99,7 +87,6 @@ void App::create_instance()
     auto exts = get_required_exts();
     create_info.enabledExtensionCount = (uint32_t)exts.size();
     create_info.ppEnabledExtensionNames = exts.data();
-
     if (ENABLE_VALIDATION_LAYERS)
     {
         create_info.enabledLayerCount = static_cast<uint32_t>(VALIDATION_LAYERS.size());
