@@ -6,10 +6,11 @@
 #include <vector>
 #include <functional>
 
-#include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <fmt/core.h>
+
+#include "vk.hpp"
 
 inline const int WIDTH = 1200;
 inline const int HEIGHT = 900;
@@ -45,8 +46,10 @@ class App
 
     vk::PhysicalDevice physical_device_;
     vk::Device device_;
-    vk::Queue graphics_queue;
-    vk::Queue present_queue;
+    vk::Queue graphics_queue_;
+    vk::Queue present_queue_;
+
+    vk::SurfaceKHR surface_;
 
   public:
     void run();
@@ -57,6 +60,7 @@ class App
 
     void create_instance();
     void setup_physical_device();
+    void setup_swap_chain();
 };
 
 #endif // APP_HPP

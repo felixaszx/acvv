@@ -26,8 +26,10 @@ void App::init_vulkan()
 
 void App::cleanup()
 {
+    device_.destroy();
     vk::DispatchLoaderDynamic instance_loader(instance_, vkGetInstanceProcAddr);
     instance_.destroyDebugUtilsMessengerEXT(debug_messenger_, nullptr, instance_loader);
+    vkDestroySurfaceKHR(instance_, surface_, nullptr);
     instance_.destroy();
 }
 

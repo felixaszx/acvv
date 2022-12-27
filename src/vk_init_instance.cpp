@@ -99,4 +99,9 @@ void App::create_instance()
 
     vk::DispatchLoaderDynamic instance_loader(instance_, vkGetInstanceProcAddr);
     VK_CHECK(debug_messenger_ = instance_.createDebugUtilsMessengerEXT(debug_info, nullptr, instance_loader));
+
+    if (glfwCreateWindowSurface(instance_, window, nullptr, (vk::SurfaceKHR::CType*)&surface_) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to create window surface!");
+    }
 }
