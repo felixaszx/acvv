@@ -18,12 +18,6 @@ inline const int MAX_FRAMES_IN_FLIGHT = 2;
 inline const std::vector<const char*> VALIDATION_LAYERS = {"VK_LAYER_KHRONOS_validation"};
 inline const std::vector<const char*> DEVICE_EXTS = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
-#ifdef NDEBUG
-inline const bool ENABLE_VALIDATION_LAYERS = false;
-#else
-inline const bool ENABLE_VALIDATION_LAYERS = true;
-#endif
-
 #define VK_CHECK(x)                                                       \
     try                                                                   \
     {                                                                     \
@@ -35,6 +29,12 @@ inline const bool ENABLE_VALIDATION_LAYERS = true;
         throw;                                                            \
     }
 
+#ifdef NDEBUG
+inline const bool ENABLE_VALIDATION_LAYERS = false;
+#else
+inline const bool ENABLE_VALIDATION_LAYERS = true;
+#endif
+
 class App
 {
   private:
@@ -45,6 +45,8 @@ class App
 
     vk::PhysicalDevice physical_device_;
     vk::Device device_;
+    vk::Queue graphics_queue;
+    vk::Queue present_queue;
 
   public:
     void run();
@@ -56,6 +58,5 @@ class App
     void create_instance();
     void setup_physical_device();
 };
-
 
 #endif // APP_HPP

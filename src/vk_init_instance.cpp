@@ -50,10 +50,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_cb(VkDebugUtilsMessageSeverityFlagBi
                                                void* pUserData)
 {
 
-    if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)
-    {
-        std::cerr << "[Vulkan Validation Layer] " << pCallbackData->pMessage << std::endl;
-    }
+    std::cerr << "[Vulkan Validation Layer] " << pCallbackData->pMessage << std::endl;
 
     return VK_FALSE;
 }
