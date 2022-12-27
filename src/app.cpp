@@ -22,14 +22,23 @@ void App::init_vulkan()
 {
     create_instance();
     setup_physical_device();
+    setup_swapchain();
+    setup_swapchain_imageview();
 }
 
 void App::cleanup()
 {
+    for (const auto& imageview : swapchain_imageviews)
+    {
+        device_.destroyImageView(imageview);
+    }
+    device_.destroySwapchainKHR(swapchain);
     device_.destroy();
+
     vk::DispatchLoaderDynamic instance_loader(instance_, vkGetInstanceProcAddr);
     instance_.destroyDebugUtilsMessengerEXT(debug_messenger_, nullptr, instance_loader);
-    vkDestroySurfaceKHR(instance_, surface_, nullptr);
+
+    instance_.destroySurfaceKHR(surface_);
     instance_.destroy();
 }
 

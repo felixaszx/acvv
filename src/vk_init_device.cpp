@@ -11,7 +11,7 @@ void App::setup_physical_device()
     std::optional<uint32_t> present_family;
 
     bool device_ready = false;
-    for (auto& device : physical_devices)
+    for (const auto& device : physical_devices)
     {
         graphic_family.reset();
         present_family.reset();
@@ -66,6 +66,8 @@ void App::setup_physical_device()
 
     std::vector<vk::DeviceQueueCreateInfo> queue_create_infos;
     std::set<uint32_t> unique_queue_families = {graphic_family.value(), present_family.value()};
+    queue_families_indices.insert(queue_families_indices.end(), //
+                                  unique_queue_families.begin(), unique_queue_families.end());
 
     float queue_priority = 1.0f;
     for (uint32_t queue_family : unique_queue_families)

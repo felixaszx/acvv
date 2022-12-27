@@ -39,17 +39,24 @@ inline const bool ENABLE_VALIDATION_LAYERS = true;
 class App
 {
   private:
-    GLFWwindow* window;
+    GLFWwindow* window = nullptr;
 
-    vk::Instance instance_;
-    vk::DebugUtilsMessengerEXT debug_messenger_;
+    vk::Instance instance_{};
+    vk::DebugUtilsMessengerEXT debug_messenger_{};
+    vk::SurfaceKHR surface_{};
 
-    vk::PhysicalDevice physical_device_;
-    vk::Device device_;
-    vk::Queue graphics_queue_;
-    vk::Queue present_queue_;
+    vk::PhysicalDevice physical_device_{};
+    vk::Device device_{};
 
-    vk::SurfaceKHR surface_;
+    std::vector<uint32_t> queue_families_indices{};
+    vk::Queue graphics_queue_{};
+    vk::Queue present_queue_{};
+
+    vk::SwapchainKHR swapchain;
+    vk::Format swapchain_image_format;
+    vk::Extent2D swapchain_extend;
+    std::vector<vk::Image> swapchain_images;
+    std::vector<vk::ImageView> swapchain_imageviews;
 
   public:
     void run();
@@ -60,7 +67,8 @@ class App
 
     void create_instance();
     void setup_physical_device();
-    void setup_swap_chain();
+    void setup_swapchain();
+    void setup_swapchain_imageview();
 };
 
 #endif // APP_HPP
