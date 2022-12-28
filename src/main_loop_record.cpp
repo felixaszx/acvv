@@ -15,6 +15,9 @@ void App::record_command(vk::CommandBuffer command_buffer, uint32_t image_index)
     command_buffer.beginRenderPass(&render_pass_info, vk::SubpassContents::eInline);
 
     command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphics_pipeline);
+    vk::Buffer vertex_buffers[] = {vertex_buffer};
+    vk::DeviceSize offsets[] = {0};
+    command_buffer.bindVertexBuffers(0, vertex_buffers, offsets);
 
     vk::Viewport viewport{};
     viewport.width = (uint32_t)swapchain_extend.width;
@@ -27,7 +30,7 @@ void App::record_command(vk::CommandBuffer command_buffer, uint32_t image_index)
     scissor.extent = swapchain_extend;
     command_buffer.setScissor(0, scissor);
 
-    command_buffer.draw(3, 1, 0, 0);
+    command_buffer.draw(vertices.size(), 1, 0, 0);
 
     command_buffer.endRenderPass();
     command_buffer.end();

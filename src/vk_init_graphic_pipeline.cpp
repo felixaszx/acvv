@@ -7,7 +7,7 @@ vk::ShaderModule App::create_shader_module(const std::vector<char>& code)
     create_info.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
     vk::ShaderModule tmp_module;
-  tmp_module = device_.createShaderModule(create_info);
+    tmp_module = device_.createShaderModule(create_info);
 
     return tmp_module;
 }
@@ -31,7 +31,13 @@ void App::setup_graphic_pipeline()
 
     vk::PipelineShaderStageCreateInfo shader_stages[] = {vert_shader_stage_info, frag_shader_stage_info};
 
+    auto binding_description = Vertex::get_input_binding_description();
+    auto attribute_description = Vertex::get_attribute_descriptions();
     vk::PipelineVertexInputStateCreateInfo vertex_input_info{};
+    vertex_input_info.vertexBindingDescriptionCount = 1;
+    vertex_input_info.pVertexBindingDescriptions = &binding_description;
+    vertex_input_info.vertexAttributeDescriptionCount = (uint32_t)attribute_description.size();
+    vertex_input_info.pVertexAttributeDescriptions = attribute_description.data();
 
     vk::PipelineInputAssemblyStateCreateInfo input_assembly{};
     input_assembly.topology = vk::PrimitiveTopology::eTriangleList;
@@ -66,7 +72,7 @@ void App::setup_graphic_pipeline()
     color_blending.pAttachments = &color_blend_attachment;
 
     vk::PipelineLayoutCreateInfo pipeline_layout_info{};
-   pipeline_layout = device_.createPipelineLayout(pipeline_layout_info);
+    pipeline_layout = device_.createPipelineLayout(pipeline_layout_info);
 
     vk::GraphicsPipelineCreateInfo pipeline_info{};
     pipeline_info.stageCount = 2;
@@ -82,7 +88,7 @@ void App::setup_graphic_pipeline()
     pipeline_info.renderPass = render_pass;
     pipeline_info.subpass = 0;
 
-   graphics_pipeline = device_.createGraphicsPipelines(VK_NULL_HANDLE, pipeline_info).value[0];
+    graphics_pipeline = device_.createGraphicsPipelines(VK_NULL_HANDLE, pipeline_info).value[0];
 
     device_.destroyShaderModule(vert_shader_module);
     device_.destroyShaderModule(frag_shader_module);

@@ -54,7 +54,7 @@ void App::setup_physical_device()
         {
             device_ready = true;
             physical_device_ = device;
-            std::cerr << "Using physical device name: " << device.getProperties().deviceName << std::endl;
+            std::cerr << "Using physical device name: " << device.getProperties().deviceName << std::endl << std::endl;
             break;
         }
     }
@@ -94,7 +94,7 @@ void App::setup_physical_device()
         create_info.ppEnabledLayerNames = VALIDATION_LAYERS.data();
     }
 
-   device_ = physical_device_.createDevice(create_info);
+    device_ = physical_device_.createDevice(create_info);
 
     graphics_queue_ = device_.getQueue(graphic_family.value(), 0);
     present_queue_ = device_.getQueue(present_family.value(), 0);

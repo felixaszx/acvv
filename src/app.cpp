@@ -17,7 +17,12 @@ void App::init_window()
     glfwSetFramebufferSizeCallback(window,
                                    [](GLFWwindow* window, int width, int height)
                                    {
-                                       auto app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window));
+                                       if (width == 0 || height == 0)
+                                       {
+                                           glfwWaitEvents();
+                                       }
+
+                                       App* app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window));
                                        app->reset_swapchain();
                                    });
 }
@@ -37,11 +42,15 @@ void App::init_vulkan()
     setup_framebuffers();
 
     setup_command_buffer();
+    setup_vertex_buffer();
 }
 
 void App::cleanup()
 {
     clear_swapchain();
+
+    device_.destroyBuffer(vertex_buffer);
+    device_.freeMemory(vertex_buffer_memory);
 
     device_.destroyPipeline(graphics_pipeline);
     device_.destroyPipelineLayout(pipeline_layout);

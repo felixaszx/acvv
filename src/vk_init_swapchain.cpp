@@ -83,7 +83,7 @@ void App::setup_swapchain()
     create_info.clipped = VK_TRUE;
     create_info.oldSwapchain = VK_NULL_HANDLE;
 
-   swapchain = device_.createSwapchainKHR(create_info);
+    swapchain = device_.createSwapchainKHR(create_info);
 
     swapchain_image_format = choosed_format.format;
     swapchain_extend = choosed_extend;
@@ -112,7 +112,7 @@ void App::setup_swapchain_imageview()
         create_info.subresourceRange.baseArrayLayer = 0;
         create_info.subresourceRange.layerCount = 1;
 
-       swapchain_imageviews[i] = device_.createImageView(create_info);
+        swapchain_imageviews[i] = device_.createImageView(create_info);
     }
 }
 
