@@ -30,7 +30,6 @@ void App::record_command(vk::CommandBuffer command_buffer, uint32_t image_index)
     command_buffer.draw(3, 1, 0, 0);
 
     command_buffer.endRenderPass();
-
     command_buffer.end();
 }
 
