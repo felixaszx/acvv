@@ -22,12 +22,18 @@ void App::init_vulkan()
 {
     create_instance();
     setup_physical_device();
+
     setup_swapchain();
     setup_swapchain_imageview();
+
+    setup_render_pass();
+    setup_graphic_pipeline();
 }
 
 void App::cleanup()
 {
+    device_.destroyPipelineLayout(pipeline_layout);
+    device_.destroyRenderPass(render_pass);
     for (const auto& imageview : swapchain_imageviews)
     {
         device_.destroyImageView(imageview);
@@ -37,7 +43,6 @@ void App::cleanup()
 
     vk::DispatchLoaderDynamic instance_loader(instance_, vkGetInstanceProcAddr);
     instance_.destroyDebugUtilsMessengerEXT(debug_messenger_, nullptr, instance_loader);
-
     instance_.destroySurfaceKHR(surface_);
     instance_.destroy();
 }

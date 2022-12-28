@@ -2,9 +2,8 @@
 #define APP_HPP
 
 #include <iostream>
+#include <fstream>
 #include <string>
-#include <vector>
-#include <functional>
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -39,7 +38,7 @@ inline const bool ENABLE_VALIDATION_LAYERS = true;
 class App
 {
   private:
-    GLFWwindow* window = nullptr;
+    GLFWwindow* window{};
 
     vk::Instance instance_{};
     vk::DebugUtilsMessengerEXT debug_messenger_{};
@@ -52,11 +51,15 @@ class App
     vk::Queue graphics_queue_{};
     vk::Queue present_queue_{};
 
-    vk::SwapchainKHR swapchain;
-    vk::Format swapchain_image_format;
-    vk::Extent2D swapchain_extend;
-    std::vector<vk::Image> swapchain_images;
-    std::vector<vk::ImageView> swapchain_imageviews;
+    vk::SwapchainKHR swapchain{};
+    vk::Format swapchain_image_format{};
+    vk::Extent2D swapchain_extend{};
+    std::vector<vk::Image> swapchain_images{};
+    std::vector<vk::ImageView> swapchain_imageviews{};
+
+    vk::RenderPass render_pass{};
+    vk::PipelineLayout pipeline_layout{};
+    vk::Pipeline graphics_pipeline{};
 
   public:
     void run();
@@ -71,8 +74,27 @@ class App
     void setup_swapchain();
     void setup_swapchain_imageview();
 
+    vk::ShaderModule create_shader_module(const std::vector<char>& code);
+    void setup_render_pass();
     void setup_graphic_pipeline();
 };
 
+inline std::vector<char> read_file(const std::string& file_name, std::ios_base::openmode mode)
+{
+
+    std::ifstream file(file_name, std::ios::ate | mode);
+
+    if (!file.is_open())
+    {
+        throw std::runtime_error("failed to open file\n");
+    }
+    size_t fileSize = (size_t)file.tellg();
+    std::vector<char> buffer(fileSize);
+    file.seekg(0);
+    file.read(buffer.data(), fileSize);
+    file.close();
+
+    return buffer;
+}
 
 #endif // APP_HPP
