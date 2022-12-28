@@ -66,8 +66,7 @@ void App::setup_physical_device()
 
     std::vector<vk::DeviceQueueCreateInfo> queue_create_infos;
     std::set<uint32_t> unique_queue_families = {graphic_family.value(), present_family.value()};
-    queue_families_indices.insert(queue_families_indices.end(), //
-                                  unique_queue_families.begin(), unique_queue_families.end());
+    queue_family_indices = {graphic_family.value(), present_family.value()};
 
     float queue_priority = 1.0f;
     for (uint32_t queue_family : unique_queue_families)
@@ -95,7 +94,7 @@ void App::setup_physical_device()
         create_info.ppEnabledLayerNames = VALIDATION_LAYERS.data();
     }
 
-    VK_CHECK(device_ = physical_device_.createDevice(create_info))
+   device_ = physical_device_.createDevice(create_info);
 
     graphics_queue_ = device_.getQueue(graphic_family.value(), 0);
     present_queue_ = device_.getQueue(present_family.value(), 0);

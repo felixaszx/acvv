@@ -21,11 +21,20 @@ void App::setup_render_pass()
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &color_attachment_ref;
 
+    vk::SubpassDependency dependecy{};
+    dependecy.srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependecy.dstSubpass = 0;
+    dependecy.srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+    dependecy.dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+    dependecy.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+
     vk::RenderPassCreateInfo render_pass_info{};
     render_pass_info.attachmentCount = 1;
     render_pass_info.pAttachments = &color_attachment;
     render_pass_info.subpassCount = 1;
     render_pass_info.pSubpasses = &subpass;
+    render_pass_info.dependencyCount = 1;
+    render_pass_info.pDependencies = &dependecy;
 
-    VK_CHECK(render_pass = device_.createRenderPass(render_pass_info));
+   render_pass = device_.createRenderPass(render_pass_info);
 }

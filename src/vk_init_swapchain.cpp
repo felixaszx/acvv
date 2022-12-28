@@ -66,11 +66,11 @@ void App::setup_swapchain()
     create_info.imageArrayLayers = 1;
     create_info.imageUsage = vk::ImageUsageFlagBits::eColorAttachment;
 
-    if (queue_families_indices.size() > 1)
+    if (queue_family_indices.graphic != queue_family_indices.present)
     {
         create_info.imageSharingMode = vk::SharingMode::eConcurrent;
-        create_info.queueFamilyIndexCount = queue_families_indices.size();
-        create_info.pQueueFamilyIndices = queue_families_indices.data();
+        create_info.queueFamilyIndexCount = 2;
+        create_info.pQueueFamilyIndices = &queue_family_indices.graphic;
     }
     else
     {
@@ -83,7 +83,7 @@ void App::setup_swapchain()
     create_info.clipped = VK_TRUE;
     create_info.oldSwapchain = VK_NULL_HANDLE;
 
-    VK_CHECK(swapchain = device_.createSwapchainKHR(create_info));
+   swapchain = device_.createSwapchainKHR(create_info);
 
     swapchain_image_format = choosed_format.format;
     swapchain_extend = choosed_extend;
@@ -112,6 +112,30 @@ void App::setup_swapchain_imageview()
         create_info.subresourceRange.baseArrayLayer = 0;
         create_info.subresourceRange.layerCount = 1;
 
-        VK_CHECK(swapchain_imageviews[i] = device_.createImageView(create_info));
+       swapchain_imageviews[i] = device_.createImageView(create_info);
     }
+}
+
+void App::clear_swapchain()
+{
+    for (auto framebuffer : swapchain_framebuffers)
+    {
+        device_.destroyFramebuffer(framebuffer);
+    }
+    for (const auto& imageview : swapchain_imageviews)
+    {
+        device_.destroyImageView(imageview);
+    }
+    device_.destroySwapchainKHR(swapchain);
+}
+
+void App::reset_swapchain()
+{
+    device_.waitIdle();
+
+    clear_swapchain();
+
+    setup_swapchain();
+    setup_swapchain_imageview();
+    setup_framebuffers();
 }

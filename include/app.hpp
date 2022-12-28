@@ -18,22 +18,17 @@ inline const int MAX_FRAMES_IN_FLIGHT = 2;
 inline const std::vector<const char*> VALIDATION_LAYERS = {"VK_LAYER_KHRONOS_validation"};
 inline const std::vector<const char*> DEVICE_EXTS = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
-#define VK_CHECK(x)                                                       \
-    try                                                                   \
-    {                                                                     \
-        x;                                                                \
-    }                                                                     \
-    catch (vk::SystemError err)                                           \
-    {                                                                     \
-        std::cerr << "[Vulkan System Error] " << err.what() << std::endl; \
-        throw;                                                            \
-    }
-
 #ifdef NDEBUG
 inline const bool ENABLE_VALIDATION_LAYERS = false;
 #else
 inline const bool ENABLE_VALIDATION_LAYERS = true;
 #endif
+
+struct QueueFamilyIndex
+{
+    uint32_t graphic;
+    uint32_t present;
+};
 
 class App
 {
@@ -47,7 +42,7 @@ class App
     vk::PhysicalDevice physical_device_{};
     vk::Device device_{};
 
-    std::vector<uint32_t> queue_families_indices{};
+    QueueFamilyIndex queue_family_indices{};
     vk::Queue graphics_queue_{};
     vk::Queue present_queue_{};
 
@@ -60,6 +55,15 @@ class App
     vk::RenderPass render_pass{};
     vk::PipelineLayout pipeline_layout{};
     vk::Pipeline graphics_pipeline{};
+    std::vector<vk::Framebuffer> swapchain_framebuffers{};
+
+    vk::CommandPool command_pool{};
+    std::vector<vk::CommandBuffer> command_buffers{};
+
+    uint32_t current_frame = 0;
+    std::vector<vk::Semaphore> image_semaphores{};
+    std::vector<vk::Semaphore> render_semaphores{};
+    std::vector<vk::Fence> in_flights{};
 
   public:
     void run();
@@ -73,10 +77,19 @@ class App
 
     void setup_swapchain();
     void setup_swapchain_imageview();
+    void clear_swapchain();
+    void reset_swapchain();
 
     vk::ShaderModule create_shader_module(const std::vector<char>& code);
     void setup_render_pass();
     void setup_graphic_pipeline();
+
+    void setup_framebuffers();
+    void setup_command_buffer();
+    void setup_sync_objs();
+
+    void record_command(vk::CommandBuffer command_buffer, uint32_t image_index);
+    void draw_frame();
 };
 
 inline std::vector<char> read_file(const std::string& file_name, std::ios_base::openmode mode)
@@ -96,5 +109,4 @@ inline std::vector<char> read_file(const std::string& file_name, std::ios_base::
 
     return buffer;
 }
-
 #endif // APP_HPP

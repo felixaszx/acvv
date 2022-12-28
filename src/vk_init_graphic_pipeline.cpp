@@ -7,7 +7,7 @@ vk::ShaderModule App::create_shader_module(const std::vector<char>& code)
     create_info.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
     vk::ShaderModule tmp_module;
-    VK_CHECK(tmp_module = device_.createShaderModule(create_info));
+  tmp_module = device_.createShaderModule(create_info);
 
     return tmp_module;
 }
@@ -25,9 +25,9 @@ void App::setup_graphic_pipeline()
     vert_shader_stage_info.pName = "main";
 
     vk::PipelineShaderStageCreateInfo frag_shader_stage_info{};
-    vert_shader_stage_info.stage = vk::ShaderStageFlagBits::eFragment;
-    vert_shader_stage_info.module = frag_shader_module;
-    vert_shader_stage_info.pName = "main";
+    frag_shader_stage_info.stage = vk::ShaderStageFlagBits::eFragment;
+    frag_shader_stage_info.module = frag_shader_module;
+    frag_shader_stage_info.pName = "main";
 
     vk::PipelineShaderStageCreateInfo shader_stages[] = {vert_shader_stage_info, frag_shader_stage_info};
 
@@ -66,7 +66,7 @@ void App::setup_graphic_pipeline()
     color_blending.pAttachments = &color_blend_attachment;
 
     vk::PipelineLayoutCreateInfo pipeline_layout_info{};
-    VK_CHECK(pipeline_layout = device_.createPipelineLayout(pipeline_layout_info));
+   pipeline_layout = device_.createPipelineLayout(pipeline_layout_info);
 
     vk::GraphicsPipelineCreateInfo pipeline_info{};
     pipeline_info.stageCount = 2;
@@ -82,7 +82,7 @@ void App::setup_graphic_pipeline()
     pipeline_info.renderPass = render_pass;
     pipeline_info.subpass = 0;
 
-    VK_CHECK(graphics_pipeline = device_.createGraphicsPipelines(VK_NULL_HANDLE, pipeline_info).value[0]);
+   graphics_pipeline = device_.createGraphicsPipelines(VK_NULL_HANDLE, pipeline_info).value[0];
 
     device_.destroyShaderModule(vert_shader_module);
     device_.destroyShaderModule(frag_shader_module);
