@@ -6,7 +6,11 @@
 #include <string>
 
 #include <GLFW/glfw3.h>
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include <chrono>
 #include <fmt/core.h>
 
 #include "vk.hpp"
@@ -57,10 +61,22 @@ class App
     vk::Pipeline graphics_pipeline{};
     std::vector<vk::Framebuffer> swapchain_framebuffers{};
 
-    vk::Buffer vertex_buffer{};
-    vk::DeviceMemory vertex_buffer_memory{};
     vk::CommandPool command_pool{};
     std::vector<vk::CommandBuffer> command_buffers{};
+
+    vk::Buffer vertex_buffer{};
+    vk::DeviceMemory vertex_buffer_memory{};
+
+    vk::Buffer index_buffer{};
+    vk::DeviceMemory index_buffer_memory{};
+
+    vk::DescriptorPool descriptor_pool;
+    vk::DescriptorSetLayout descriptor_set_layout{};
+    std::vector<vk::DescriptorSet> descriptor_set{};
+
+    std::vector<vk::Buffer> uniform_buffers{};
+    std::vector<vk::DeviceMemory> uniform_buffers_memory{};
+    std::vector<void*> uniform_buffers_map{};
 
     uint32_t current_frame = 0;
     std::vector<vk::Semaphore> image_semaphores{};
@@ -84,14 +100,20 @@ class App
 
     vk::ShaderModule create_shader_module(const std::vector<char>& code);
     void setup_render_pass();
+    void setup_descriptor_set_layout();
     void setup_graphic_pipeline();
 
     void setup_framebuffers();
     void setup_command_buffer();
-    void setup_vertex_buffer();
     void setup_sync_objs();
 
+    void setup_vertex_buffer();
+    void setup_index_buffer();
+    void setup_uniform_buffer();
+    void setup_descriptor_pool();
+
     void record_command(vk::CommandBuffer command_buffer, uint32_t image_index);
+    void update_ubo(uint32_t current_image);
     void draw_frame();
 
     uint32_t find_memory_type(uint32_t type, vk::MemoryPropertyFlags properties)
@@ -210,8 +232,17 @@ struct Vertex
     }
 };
 
-const std::vector<Vertex> vertices = {{{0.0f, -0.5f}, {1.0f, 1.0f, 0.0f}}, //
-                                      {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},  //
-                                      {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
+const std::vector<Vertex> vertices = {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}}, //
+                                      {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},  //
+                                      {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},   //
+                                      {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}};
+const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
+
+struct UniformBufferObject
+{
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
 
 #endif // APP_HPP

@@ -18,6 +18,7 @@ void App::record_command(vk::CommandBuffer command_buffer, uint32_t image_index)
     vk::Buffer vertex_buffers[] = {vertex_buffer};
     vk::DeviceSize offsets[] = {0};
     command_buffer.bindVertexBuffers(0, vertex_buffers, offsets);
+    command_buffer.bindIndexBuffer(index_buffer, 0, vk::IndexType::eUint16);
 
     vk::Viewport viewport{};
     viewport.width = (uint32_t)swapchain_extend.width;
@@ -30,10 +31,29 @@ void App::record_command(vk::CommandBuffer command_buffer, uint32_t image_index)
     scissor.extent = swapchain_extend;
     command_buffer.setScissor(0, scissor);
 
-    command_buffer.draw(vertices.size(), 1, 0, 0);
+    command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0,
+                                      descriptor_set[current_frame], {});
+
+    command_buffer.drawIndexed(indices.size(), 1, 0, 0, 0);
 
     command_buffer.endRenderPass();
     command_buffer.end();
+}
+
+void App::update_ubo(uint32_t current_image)
+{
+    static auto start_time = std::chrono::high_resolution_clock::now();
+    auto current_time = std::chrono::high_resolution_clock::now();
+    float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
+
+    UniformBufferObject ubo{};
+    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0, 0, 1));
+    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.proj =
+        glm::perspective(glm::radians(45.0f), swapchain_extend.width / (float)swapchain_extend.height, 0.1f, 10.0f);
+    ubo.proj[1][1] *= -1;
+
+    memcpy(uniform_buffers_map[current_image], &ubo, sizeof(ubo));
 }
 
 void App::draw_frame()
@@ -47,12 +67,14 @@ void App::draw_frame()
     uint32_t image_index = image_detail.value;
     device_.resetFences(in_flights[current_frame]);
 
+    update_ubo(current_frame);
     command_buffers[current_frame].reset();
     record_command(command_buffers[current_frame], image_index);
 
     vk::Semaphore wait_semaphores[] = {image_semaphores[current_frame]};
     vk::Semaphore signal_semaphores[] = {render_semaphores[current_frame]};
     vk::PipelineStageFlags wait_stages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
+
 
     vk::SubmitInfo submit_info{};
     submit_info.waitSemaphoreCount = 1;

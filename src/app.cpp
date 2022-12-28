@@ -17,12 +17,11 @@ void App::init_window()
     glfwSetFramebufferSizeCallback(window,
                                    [](GLFWwindow* window, int width, int height)
                                    {
-                                       if (width == 0 || height == 0)
+                                       App* app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window));
+                                       while (glfwGetWindowAttrib(window, GLFW_ICONIFIED))
                                        {
                                            glfwWaitEvents();
                                        }
-
-                                       App* app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window));
                                        app->reset_swapchain();
                                    });
 }
@@ -36,6 +35,7 @@ void App::init_vulkan()
     setup_swapchain_imageview();
 
     setup_render_pass();
+    setup_descriptor_set_layout();
     setup_graphic_pipeline();
 
     setup_sync_objs();
@@ -43,16 +43,30 @@ void App::init_vulkan()
 
     setup_command_buffer();
     setup_vertex_buffer();
+    setup_index_buffer();
+    setup_uniform_buffer();
+    setup_descriptor_pool();
 }
 
 void App::cleanup()
 {
     clear_swapchain();
 
+    device_.destroyDescriptorPool(descriptor_pool);
+    device_.destroyDescriptorSetLayout(descriptor_set_layout);
+
+    device_.destroyBuffer(index_buffer);
+    device_.freeMemory(index_buffer_memory);
+
     device_.destroyBuffer(vertex_buffer);
     device_.freeMemory(vertex_buffer_memory);
 
     device_.destroyPipeline(graphics_pipeline);
+    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        device_.destroyBuffer(uniform_buffers[i]);
+        device_.freeMemory(uniform_buffers_memory[i]);
+    }
     device_.destroyPipelineLayout(pipeline_layout);
     device_.destroyRenderPass(render_pass);
 

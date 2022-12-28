@@ -56,7 +56,7 @@ void App::setup_graphic_pipeline()
     rasterizer.polygonMode = vk::PolygonMode::eFill;
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = vk::CullModeFlagBits::eBack;
-    rasterizer.frontFace = vk::FrontFace::eClockwise;
+    rasterizer.frontFace = vk::FrontFace::eCounterClockwise;
 
     vk::PipelineMultisampleStateCreateInfo multisample{};
     multisample.rasterizationSamples = vk::SampleCountFlagBits::e1;
@@ -72,6 +72,8 @@ void App::setup_graphic_pipeline()
     color_blending.pAttachments = &color_blend_attachment;
 
     vk::PipelineLayoutCreateInfo pipeline_layout_info{};
+    pipeline_layout_info.setLayoutCount = 1;
+    pipeline_layout_info.pSetLayouts = &descriptor_set_layout;
     pipeline_layout = device_.createPipelineLayout(pipeline_layout_info);
 
     vk::GraphicsPipelineCreateInfo pipeline_info{};
