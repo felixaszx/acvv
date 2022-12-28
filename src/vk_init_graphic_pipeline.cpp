@@ -82,7 +82,7 @@ void App::setup_graphic_pipeline()
     pipeline_info.renderPass = render_pass;
     pipeline_info.subpass = 0;
 
-    VK_CHECK(graphics_pipeline = device_.create(VK_NULL_HANDLE, pipeline_info));
+    VK_CHECK(graphics_pipeline = device_.createGraphicsPipelines(VK_NULL_HANDLE, pipeline_info).value[0]);
 
     device_.destroyShaderModule(vert_shader_module);
     device_.destroyShaderModule(frag_shader_module);
