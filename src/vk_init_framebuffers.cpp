@@ -16,6 +16,6 @@ void App::setup_framebuffers()
         create_info.height = swapchain_extend.height;
         create_info.layers = 1;
 
-       swapchain_framebuffers[i] = device_.createFramebuffer(create_info);
+        swapchain_framebuffers[i] = device_.createFramebuffer(create_info);
     }
 }

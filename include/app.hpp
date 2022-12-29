@@ -4,15 +4,10 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <chrono>
 
 #include <GLFW/glfw3.h>
-#define GLM_FORCE_RADIANS
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-#include <chrono>
 #include <fmt/core.h>
-
 #include "vk.hpp"
 
 inline const int WIDTH = 1200;
@@ -201,8 +196,8 @@ inline std::vector<char> read_file(const std::string& file_name, std::ios_base::
 
 struct Vertex
 {
-    glm::vec2 pos;
-    glm::vec3 color;
+    vkm::vec2 pos;
+    vkm::vec3 color;
 
     static vk::VertexInputBindingDescription get_input_binding_description()
     {
@@ -240,9 +235,9 @@ const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
 
 struct UniformBufferObject
 {
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 proj;
+    vkm::mat4 model;
+    vkm::mat4 view;
+    vkm::mat4 proj;
 };
 
 #endif // APP_HPP

@@ -47,11 +47,10 @@ void App::update_ubo(uint32_t current_image)
     float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
 
     UniformBufferObject ubo{};
-    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0, 0, 1));
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.model = vkm::rotate(vkm::mat4(1.0f), time * vkm::radians(90.0f), vkm::vec3(0, 0, 1));
+    ubo.view = vkm::lookAt(vkm::vec3(2.0f, 2.0f, 2.0f), vkm::vec3(0.0f, 0.0f, 0.0f), vkm::vec3(0.0f, 0.0f, 1.0f));
     ubo.proj =
-        glm::perspective(glm::radians(45.0f), swapchain_extend.width / (float)swapchain_extend.height, 0.1f, 10.0f);
-    ubo.proj[1][1] *= -1;
+        vkm::perspective(vkm::radians(45.0f), swapchain_extend.width / (float)swapchain_extend.height, 0.1f, 10.0f);
 
     memcpy(uniform_buffers_map[current_image], &ubo, sizeof(ubo));
 }
@@ -74,7 +73,6 @@ void App::draw_frame()
     vk::Semaphore wait_semaphores[] = {image_semaphores[current_frame]};
     vk::Semaphore signal_semaphores[] = {render_semaphores[current_frame]};
     vk::PipelineStageFlags wait_stages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
-
 
     vk::SubmitInfo submit_info{};
     submit_info.waitSemaphoreCount = 1;
