@@ -6,8 +6,6 @@
 #define GLM_FORCE_INLINE
 #define GLM_FORCE_XYZW_ONLY
 #include <glm/glm.hpp>
-
-#ifdef VKM_ENABLE_GTC
 #include <glm/gtc/bitfield.hpp>
 #include <glm/gtc/color_space.hpp>
 #include <glm/gtc/constants.hpp>
@@ -27,13 +25,11 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/ulp.hpp>
 #include <glm/gtc/vec1.hpp>
-#endif
 
 namespace vkm
 {
     using namespace glm;
 
-#ifdef VKM_ENABLE_GTC
     template <typename T>
     GLM_FUNC_QUALIFIER mat<4, 4, T, defaultp> perspective(T fovy, T aspect, T zNear, T zFar)
     {
@@ -41,7 +37,6 @@ namespace vkm
         tmp[1][1] *= -1;
         return tmp;
     }
-#endif
 } // namespace vkm
 
 #endif // VKM_HPP
