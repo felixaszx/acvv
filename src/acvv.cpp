@@ -28,7 +28,9 @@ void Acvv::init_window()
 void Acvv::init_vulkan()
 {
     create_instance();
-    setup_physical_device();
+    setup_device();
+    create_swapchain();
+    get_swapchain_imageviews();
 }
 
 void Acvv::main_loop()
@@ -41,6 +43,11 @@ void Acvv::main_loop()
 
 void Acvv::cleanup()
 {
+    for (VkImageView& imageview : swapchain_imageviews_)
+    {
+        vkDestroyImageView(device_, imageview, nullptr);
+    }
+    vkDestroySwapchainKHR(device_, swapchain_, nullptr);
     vkDestroyDevice(device_, nullptr);
 
     auto load_func = load_ext_function<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr, instance_,
@@ -52,6 +59,7 @@ void Acvv::cleanup()
     glfwDestroyWindow(window_);
     glfwTerminate();
 }
+
 uint32_t Acvv::find_memory_type(uint32_t type, VkMemoryPropertyFlags properties)
 {
     VkPhysicalDeviceMemoryProperties mem_prop{};

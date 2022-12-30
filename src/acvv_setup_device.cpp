@@ -1,6 +1,6 @@
 #include "acvv.hpp"
 
-void Acvv::setup_physical_device()
+void Acvv::setup_device()
 {
     uint32_t physical_deviec_count = 0;
     vkEnumeratePhysicalDevices(instance_, &physical_deviec_count, nullptr);

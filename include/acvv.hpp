@@ -89,7 +89,11 @@ class Acvv
     Func_t load_ext_function(GetFunc_t get_func, Args... args);
     void create_instance();
 
-    void setup_physical_device();
+    void setup_device();
+    void create_swapchain();
+    void clear_swapchain();
+    void reset_swapchain();
+    void get_swapchain_imageviews();
 
     uint32_t find_memory_type(uint32_t type, VkMemoryPropertyFlags properties);
     void create_buffer(VkDeviceSize size,                                          //
