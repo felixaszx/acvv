@@ -95,11 +95,11 @@ void App::create_instance()
         create_info.enabledLayerCount = 0;
     }
 
-  instance_ = vk::createInstance(create_info, nullptr);
+    instance_ = vk::createInstance(create_info, nullptr);
     if (ENABLE_VALIDATION_LAYERS)
     {
         vk::DispatchLoaderDynamic instance_loader(instance_, vkGetInstanceProcAddr);
-      debug_messenger_ = instance_.createDebugUtilsMessengerEXT(debug_info, nullptr, instance_loader);
+        debug_messenger_ = instance_.createDebugUtilsMessengerEXT(debug_info, nullptr, instance_loader);
     }
 
     if (glfwCreateWindowSurface(instance_, window, nullptr, (vk::SurfaceKHR::CType*)&surface_) != VK_SUCCESS)

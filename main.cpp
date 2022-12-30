@@ -1,8 +1,8 @@
-#include "app.hpp"
+#include "acvv.hpp"
 
 int main(int argc, char** argv)
 {
-    App app;
+    Acvv app;
     try
     {
         app.run();

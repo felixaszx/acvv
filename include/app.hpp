@@ -6,9 +6,11 @@
 #include <string>
 #include <chrono>
 
+#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <fmt/core.h>
-#include "vk.hpp"
+#include <vulkan/vulkan.hpp>
+#include <vkm.hpp>
 
 inline const int WIDTH = 1200;
 inline const int HEIGHT = 900;
@@ -25,7 +27,7 @@ inline const bool ENABLE_VALIDATION_LAYERS = true;
 
 struct QueueFamilyIndex
 {
-    uint32_t graphic;
+    uint32_t graphic; 
     uint32_t present;
 };
 

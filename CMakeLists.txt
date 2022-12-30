@@ -6,8 +6,6 @@ set(CMAKE_CXX_EXTENSIONS off)
 
 file(GLOB_RECURSE SRC_CPP src/*.cpp)
 add_executable(acvv main.cpp ${SRC_CPP})
-target_compile_definitions(acvv PUBLIC GLFW_INCLUDE_NONE)
-target_precompile_headers(acvv PUBLIC include/vk.hpp)
 
 # includes-cpp
 target_include_directories(acvv PUBLIC include)
