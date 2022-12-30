@@ -90,7 +90,7 @@ void App::setup_physical_device()
 
     if (ENABLE_VALIDATION_LAYERS)
     {
-        create_info.enabledExtensionCount = (uint32_t)VALIDATION_LAYERS.size();
+        create_info.enabledLayerCount = (uint32_t)VALIDATION_LAYERS.size();
         create_info.ppEnabledLayerNames = VALIDATION_LAYERS.data();
     }
 

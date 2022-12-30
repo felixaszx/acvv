@@ -28,6 +28,7 @@ void Acvv::init_window()
 void Acvv::init_vulkan()
 {
     create_instance();
+    setup_physical_device();
 }
 
 void Acvv::main_loop()
@@ -40,6 +41,7 @@ void Acvv::main_loop()
 
 void Acvv::cleanup()
 {
+    vkDestroyDevice(device_, nullptr);
 
     auto load_func = load_ext_function<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr, instance_,
                                                                             "vkDestroyDebugUtilsMessengerEXT");
@@ -50,7 +52,6 @@ void Acvv::cleanup()
     glfwDestroyWindow(window_);
     glfwTerminate();
 }
-
 uint32_t Acvv::find_memory_type(uint32_t type, VkMemoryPropertyFlags properties)
 {
     VkPhysicalDeviceMemoryProperties mem_prop{};
@@ -154,8 +155,33 @@ VkBool32 VKAPI_CALL debug_cb(VkDebugUtilsMessageSeverityFlagBitsEXT messageSever
                              VkDebugUtilsMessageTypeFlagsEXT messageType,
                              const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 {
-
-    std::cerr << "[Vulkan Validation Layer] " << pCallbackData->pMessage << std::endl << std::endl;
+    auto type = [messageSeverity]()
+    {
+        switch (messageSeverity)
+        {
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+            {
+                return "WARNING";
+            }
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+            {
+                return "ERROR";
+            }
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+            {
+                return "INFO";
+            }
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+            {
+                return "VERBOSE";
+            }
+            default:
+            {
+                return "UNDEFINE";
+            }
+        }
+    };
+    std::cerr << fmt::format("[Vulkan Validation Layer: {}] {}\n\n", type(), pCallbackData->pMessage);
 
     return VK_FALSE;
 }
