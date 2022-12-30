@@ -41,7 +41,8 @@ void Acvv::main_loop()
 void Acvv::cleanup()
 {
 
-    auto load_func = load_ext_function<PFN_vkDestroyDebugUtilsMessengerEXT>("vkDestroyDebugUtilsMessengerEXT");
+    auto load_func = load_ext_function<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr, instance_,
+                                                                            "vkDestroyDebugUtilsMessengerEXT");
     load_func(instance_, messenger_, nullptr);
     vkDestroySurfaceKHR(instance_, surface_, nullptr);
     vkDestroyInstance(instance_, nullptr);

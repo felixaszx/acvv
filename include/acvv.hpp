@@ -85,8 +85,8 @@ class Acvv
     void main_loop();
     void cleanup();
 
-    template <typename Func_t>
-    Func_t load_ext_function(const char* func_name);
+    template <typename Func_t, typename GetFunc_t, typename... Args>
+    Func_t load_ext_function(GetFunc_t get_func, Args... args);
     void create_instance();
 
     uint32_t find_memory_type(uint32_t type, VkMemoryPropertyFlags properties);
@@ -103,10 +103,10 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_cb(VkDebugUtilsMessageSeverityFlagBitsEXT m
                                         const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, //
                                         void* pUserData);
 
-template <typename Func_t>
-inline Func_t Acvv::load_ext_function(const char* func_name)
+template <typename Func_t, typename GetFunc_t, typename... Args>
+inline Func_t Acvv::load_ext_function(GetFunc_t get_func, Args... args)
 {
-    return reinterpret_cast<Func_t>(vkGetInstanceProcAddr(instance_, func_name));
+    return (Func_t)get_func(args...);
 }
 
 #endif // ACVV_HPP

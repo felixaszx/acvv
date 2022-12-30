@@ -48,7 +48,8 @@ void Acvv::create_instance()
 
     if (ENABLE_VALIDATION_LAYERS)
     {
-        auto load_func = load_ext_function<PFN_vkCreateDebugUtilsMessengerEXT>("vkCreateDebugUtilsMessengerEXT");
+        auto load_func = load_ext_function<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr, instance_,
+                                                                               "vkCreateDebugUtilsMessengerEXT");
         if (load_func(instance_, &debug_utils_creat_info, nullptr, &messenger_) != VK_SUCCESS)
         {
 
