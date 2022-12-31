@@ -57,6 +57,11 @@ class Acvv
     std::vector<VkImage> swapchain_images_{};
     std::vector<VkImageView> swapchain_imageviews_{};
 
+    VkRenderPass render_pass_ = VK_NULL_HANDLE;
+    VkPipelineLayout pipeline_Layout_ = VK_NULL_HANDLE;
+    VkPipeline graphics_pipeline_ = VK_NULL_HANDLE;
+    std::vector<VkFramebuffer> swapchain_framebuffers_{};
+
     VkCommandPool command_pool_ = VK_NULL_HANDLE;
     std::vector<VkCommandBuffer> command_buffers_{};
 
@@ -90,10 +95,13 @@ class Acvv
     void create_instance();
 
     void setup_device();
+
     void create_swapchain();
     void clear_swapchain();
     void reset_swapchain();
     void get_swapchain_imageviews();
+
+    void create_framebuffers();
 
     uint32_t find_memory_type(uint32_t type, VkMemoryPropertyFlags properties);
     void create_buffer(VkDeviceSize size,                                          //
