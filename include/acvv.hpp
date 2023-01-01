@@ -107,9 +107,10 @@ class Acvv
     void setup_descriptor_set_layout();
     void create_graphics_pipeline();
 
-    void create_framebuffers();
-    void create_command_buffer();
     void create_sync_objs();
+    void create_framebuffers();
+    
+    void create_command_buffer();
 
     uint32_t find_memory_type(uint32_t type, VkMemoryPropertyFlags properties);
     void create_buffer(VkDeviceSize size,                                          //
@@ -194,5 +195,6 @@ struct UniformBufferObject
     glm::mat4 view;
     glm::mat4 proj;
 };
+
 
 #endif // ACVV_HPP

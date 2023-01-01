@@ -35,6 +35,9 @@ void Acvv::init_vulkan()
     create_render_pass();
     setup_descriptor_set_layout();
     create_graphics_pipeline();
+
+    create_sync_objs();
+    create_framebuffers();
 }
 
 void Acvv::main_loop()
@@ -47,7 +50,22 @@ void Acvv::main_loop()
 
 void Acvv::cleanup()
 {
+    vkDestroyDescriptorSetLayout(device_, descriptor_set_layout_, nullptr);
+    vkDestroyPipeline(device_, graphics_pipeline_, nullptr);
+    for (VkFramebuffer& framebuffer : swapchain_framebuffers_)
+    {
+        vkDestroyFramebuffer(device_, framebuffer, nullptr);
+    }
+    vkDestroyPipelineLayout(device_, pipeline_Layout_, nullptr);
     vkDestroyRenderPass(device_, render_pass_, nullptr);
+
+    for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        vkDestroySemaphore(device_, get_image_semaphores[i], nullptr);
+        vkDestroySemaphore(device_, image_render_semaphores[i], nullptr);
+        vkDestroyFence(device_, frame_fence[i], nullptr);
+    }
+
     for (VkImageView& imageview : swapchain_imageviews_)
     {
         vkDestroyImageView(device_, imageview, nullptr);
