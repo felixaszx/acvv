@@ -38,6 +38,8 @@ void Acvv::init_vulkan()
 
     create_sync_objs();
     create_framebuffers();
+
+    create_command_buffer();
 }
 
 void Acvv::main_loop()
@@ -65,6 +67,7 @@ void Acvv::cleanup()
         vkDestroySemaphore(device_, image_render_semaphores[i], nullptr);
         vkDestroyFence(device_, frame_fence[i], nullptr);
     }
+    vkDestroyCommandPool(device_, command_pool_, nullptr);
 
     for (VkImageView& imageview : swapchain_imageviews_)
     {
