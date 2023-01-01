@@ -7,6 +7,7 @@
 #include <array>
 #include <set>
 #include <functional>
+#include <fstream>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -101,7 +102,14 @@ class Acvv
     void reset_swapchain();
     void get_swapchain_imageviews();
 
+    VkShaderModule create_shader_module(const std::vector<char>& code);
+    void create_render_pass();
+    void setup_descriptor_set_layout();
+    void create_graphics_pipeline();
+
     void create_framebuffers();
+    void create_command_buffer();
+    void create_sync_objs();
 
     uint32_t find_memory_type(uint32_t type, VkMemoryPropertyFlags properties);
     void create_buffer(VkDeviceSize size,                                          //
@@ -122,5 +130,69 @@ inline Func_t Acvv::load_ext_function(GetFunc_t get_func, Args... args)
 {
     return (Func_t)get_func(args...);
 }
+
+inline std::vector<char> read_file(const std::string& file_name, std::ios_base::openmode mode)
+{
+
+    std::ifstream file(file_name, std::ios::ate | mode);
+
+    if (!file.is_open())
+    {
+        throw std::runtime_error("failed to open file\n");
+    }
+    size_t fileSize = (size_t)file.tellg();
+    std::vector<char> buffer(fileSize);
+    file.seekg(0);
+    file.read(buffer.data(), fileSize);
+    file.close();
+
+    return buffer;
+}
+
+struct Vertex
+{
+    glm::vec2 pos;
+    glm::vec3 color;
+
+    static VkVertexInputBindingDescription get_input_binding_description()
+    {
+        VkVertexInputBindingDescription binding_description{};
+        binding_description.binding = 0;
+        binding_description.stride = sizeof(Vertex);
+        binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+        return binding_description;
+    }
+
+    static std::array<VkVertexInputAttributeDescription, 2> get_attribute_descriptions()
+    {
+        std::array<VkVertexInputAttributeDescription, 2> attribute_descriptions;
+
+        attribute_descriptions[0].binding = 0;
+        attribute_descriptions[0].location = 0;
+        attribute_descriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+        attribute_descriptions[0].offset = offsetof(Vertex, pos);
+
+        attribute_descriptions[1].binding = 0;
+        attribute_descriptions[1].location = 1;
+        attribute_descriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+        attribute_descriptions[1].offset = offsetof(Vertex, color);
+
+        return attribute_descriptions;
+    }
+};
+
+const std::vector<Vertex> vertices = {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}}, //
+                                      {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},  //
+                                      {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},   //
+                                      {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}};
+const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
+
+struct UniformBufferObject
+{
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
 
 #endif // ACVV_HPP
