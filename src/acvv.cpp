@@ -52,12 +52,9 @@ void Acvv::main_loop()
 
 void Acvv::cleanup()
 {
+    clear_swapchain();
     vkDestroyDescriptorSetLayout(device_, descriptor_set_layout_, nullptr);
     vkDestroyPipeline(device_, graphics_pipeline_, nullptr);
-    for (VkFramebuffer& framebuffer : swapchain_framebuffers_)
-    {
-        vkDestroyFramebuffer(device_, framebuffer, nullptr);
-    }
     vkDestroyPipelineLayout(device_, pipeline_Layout_, nullptr);
     vkDestroyRenderPass(device_, render_pass_, nullptr);
 
@@ -68,12 +65,6 @@ void Acvv::cleanup()
         vkDestroyFence(device_, frame_fence[i], nullptr);
     }
     vkDestroyCommandPool(device_, command_pool_, nullptr);
-
-    for (VkImageView& imageview : swapchain_imageviews_)
-    {
-        vkDestroyImageView(device_, imageview, nullptr);
-    }
-    vkDestroySwapchainKHR(device_, swapchain_, nullptr);
     vkDestroyDevice(device_, nullptr);
 
     auto load_func = load_ext_function<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr, instance_,

@@ -119,8 +119,24 @@ void Acvv::get_swapchain_imageviews()
 
 void Acvv::clear_swapchain()
 {
+    for (VkFramebuffer& framebuffer : swapchain_framebuffers_)
+    {
+        vkDestroyFramebuffer(device_, framebuffer, nullptr);
+    }
+    for (VkImageView& imageview : swapchain_imageviews_)
+    {
+        vkDestroyImageView(device_, imageview, nullptr);
+    }
+    vkDestroySwapchainKHR(device_, swapchain_, nullptr);
 }
 
 void Acvv::reset_swapchain()
 {
+    vkDeviceWaitIdle(device_);
+
+    clear_swapchain();
+
+    create_swapchain();
+    get_swapchain_imageviews();
+    create_framebuffers();
 }
