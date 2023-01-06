@@ -8,12 +8,14 @@
 #include <set>
 #include <functional>
 #include <fstream>
+#include <chrono>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 #include <fmt/core.h>
-#include <glm/glm.hpp>
+
+#include "vkm.hpp"
 
 inline const int WIDTH = 1200;
 inline const int HEIGHT = 900;
@@ -109,8 +111,17 @@ class Acvv
 
     void create_sync_objs();
     void create_framebuffers();
-    
+
     void create_command_buffer();
+
+    void create_vertex_buffer();
+    void create_index_buffer();
+    void create_uniform_buffer();
+    void create_descriptor_pool();
+
+    void record_command(VkCommandBuffer command_buffer, uint32_t image_index);
+    void update_ubo(uint32_t current_image);
+    void draw_frame();
 
     uint32_t find_memory_type(uint32_t type, VkMemoryPropertyFlags properties);
     void create_buffer(VkDeviceSize size,                                          //
@@ -195,6 +206,5 @@ struct UniformBufferObject
     glm::mat4 view;
     glm::mat4 proj;
 };
-
 
 #endif // ACVV_HPP

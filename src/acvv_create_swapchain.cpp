@@ -86,7 +86,7 @@ void Acvv::create_swapchain()
 
     vkCreateSwapchainKHR(device_, &swapchain_create_info, nullptr, &swapchain_);
     swapchain_image_format_ = selected_format.format;
-    swapchain_images_.reserve(image_count);
+    swapchain_images_.resize(image_count);
     vkGetSwapchainImagesKHR(device_, swapchain_, &image_count, swapchain_images_.data());
 }
 

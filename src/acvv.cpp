@@ -22,6 +22,7 @@ void Acvv::init_window()
                                        {
                                            glfwWaitEvents();
                                        }
+                                       app->reset_swapchain();
                                    });
 }
 
@@ -40,6 +41,10 @@ void Acvv::init_vulkan()
     create_framebuffers();
 
     create_command_buffer();
+    create_vertex_buffer();
+    create_index_buffer();
+    create_uniform_buffer();
+    create_descriptor_pool();
 }
 
 void Acvv::main_loop()
@@ -47,14 +52,30 @@ void Acvv::main_loop()
     while (!glfwWindowShouldClose(window_))
     {
         glfwPollEvents();
+        draw_frame();
     }
+    vkDeviceWaitIdle(device_);
 }
 
 void Acvv::cleanup()
 {
     clear_swapchain();
+
+    vkDestroyDescriptorPool(device_, descriptor_pool_, nullptr);
     vkDestroyDescriptorSetLayout(device_, descriptor_set_layout_, nullptr);
+
+    vkDestroyBuffer(device_, vertex_buffer_, nullptr);
+    vkFreeMemory(device_, vertex_buffer_memory_, nullptr);
+
+    vkDestroyBuffer(device_, index_buffer_, nullptr);
+    vkFreeMemory(device_, index_buffer_memory_, nullptr);
+
     vkDestroyPipeline(device_, graphics_pipeline_, nullptr);
+    for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        vkDestroyBuffer(device_, uniform_buffers_[i], nullptr);
+        vkFreeMemory(device_, uniform_buffers_memory_[i], nullptr);
+    }
     vkDestroyPipelineLayout(device_, pipeline_Layout_, nullptr);
     vkDestroyRenderPass(device_, render_pass_, nullptr);
 
