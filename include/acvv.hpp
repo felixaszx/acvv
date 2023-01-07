@@ -14,6 +14,7 @@
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 #include <fmt/core.h>
+#include <stb/stb_image.h>
 
 #include "vkm.hpp"
 
@@ -113,6 +114,7 @@ class Acvv
     void create_framebuffers();
 
     void create_command_buffer();
+    void create_texture_image();
 
     void create_vertex_buffer();
     void create_index_buffer();

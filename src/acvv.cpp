@@ -1,3 +1,4 @@
+#define STB_IMAGE_IMPLEMENTATION
 #include "acvv.hpp"
 
 void Acvv::run()
@@ -41,6 +42,8 @@ void Acvv::init_vulkan()
     create_framebuffers();
 
     create_command_buffer();
+    create_texture_image();
+
     create_vertex_buffer();
     create_index_buffer();
     create_uniform_buffer();
