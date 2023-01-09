@@ -1,4 +1,5 @@
 #define STB_IMAGE_IMPLEMENTATION
+#define VMA_IMPLEMENTATION
 #include "acvv.hpp"
 
 void Acvv::run()

@@ -16,6 +16,10 @@
 #include <fmt/core.h>
 #include <stb/stb_image.h>
 
+#define VMA_STATIC_VULKAN_FUNCTIONS  0
+#define VMA_DYNAMIC_VULKAN_FUNCTIONS 1
+#include "vma.hpp"
+
 #include "vkm.hpp"
 
 inline const int WIDTH = 1200;
@@ -50,6 +54,7 @@ class Acvv
 
     VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
     VkDevice device_ = VK_NULL_HANDLE;
+    VmaAllocator vma_allocator_ = VK_NULL_HANDLE;
 
     QueueFamilyIndex queue_family_indices{};
     VkQueue graphics_queue_ = VK_NULL_HANDLE;

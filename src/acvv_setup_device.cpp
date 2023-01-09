@@ -101,4 +101,19 @@ void Acvv::setup_device()
 
     vkGetDeviceQueue(device_, queue_family_indices.graphics, 0, &graphics_queue_);
     vkGetDeviceQueue(device_, queue_family_indices.present, 0, &present_queue_);
+
+    VmaVulkanFunctions vma_functions{};
+    vma_functions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
+    vma_functions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
+    vma_functions.vkGetDeviceBufferMemoryRequirements = &vkGetDeviceBufferMemoryRequirements;
+    vma_functions.vkGetDeviceImageMemoryRequirements = &vkGetDeviceImageMemoryRequirements;
+
+    VmaAllocatorCreateInfo vma_create_info{};
+    vma_create_info.vulkanApiVersion = VK_API_VERSION_1_3;
+    vma_create_info.pVulkanFunctions = &vma_functions;
+    vma_create_info.instance = instance_;
+    vma_create_info.physicalDevice = physical_device_;
+    vma_create_info.device = device_;
+
+    vmaCreateAllocator(&vma_create_info, &vma_allocator_);
 }
