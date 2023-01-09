@@ -9,14 +9,14 @@ void Acvv::create_sync_objs()
     fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    get_image_semaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    image_render_semaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    frame_fence.resize(MAX_FRAMES_IN_FLIGHT);
+    get_image_semaphores_.resize(MAX_FRAMES_IN_FLIGHT);
+    image_render_semaphores_.resize(MAX_FRAMES_IN_FLIGHT);
+    frame_fence_.resize(MAX_FRAMES_IN_FLIGHT);
     for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        vkCreateSemaphore(device_, &semaphore_info, nullptr, &get_image_semaphores[i]);
-        vkCreateSemaphore(device_, &semaphore_info, nullptr, &image_render_semaphores[i]);
-        vkCreateFence(device_, &fence_info, nullptr, &frame_fence[i]);
+        vkCreateSemaphore(device_, &semaphore_info, nullptr, &get_image_semaphores_[i]);
+        vkCreateSemaphore(device_, &semaphore_info, nullptr, &image_render_semaphores_[i]);
+        vkCreateFence(device_, &fence_info, nullptr, &frame_fence_[i]);
     }
 }
 

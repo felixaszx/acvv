@@ -34,7 +34,7 @@ void Acvv::record_command(VkCommandBuffer command_buffer, uint32_t image_index)
     vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
     vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_Layout_, 0, 1,
-                            &descriptor_set_[current_frame], 0, nullptr);
+                            &descriptor_set_[current_frame_], 0, nullptr);
     vkCmdDrawIndexed(command_buffer, castt(uint32_t, indices.size()), 1, 0, 0, 0);
 
     vkCmdEndRenderPass(command_buffer);
@@ -58,22 +58,22 @@ void Acvv::update_ubo(uint32_t current_image)
 
 void Acvv::draw_frame()
 {
-    if (vkWaitForFences(device_, 1, &frame_fence[current_frame], VK_TRUE, UINT64_MAX) != VK_SUCCESS)
+    if (vkWaitForFences(device_, 1, &frame_fence_[current_frame_], VK_TRUE, UINT64_MAX) != VK_SUCCESS)
     {
         throw std::runtime_error("in flight fence error\n");
     }
 
     uint32_t image_index = 0;
-    vkAcquireNextImageKHR(device_, swapchain_, UINT64_MAX, get_image_semaphores[current_frame], VK_NULL_HANDLE,
+    vkAcquireNextImageKHR(device_, swapchain_, UINT64_MAX, get_image_semaphores_[current_frame_], VK_NULL_HANDLE,
                           &image_index);
-    vkResetFences(device_, 1, &frame_fence[current_frame]);
+    vkResetFences(device_, 1, &frame_fence_[current_frame_]);
 
-    update_ubo(current_frame);
-    vkResetCommandBuffer(command_buffers_[current_frame], 0);
-    record_command(command_buffers_[current_frame], image_index);
+    update_ubo(current_frame_);
+    vkResetCommandBuffer(command_buffers_[current_frame_], 0);
+    record_command(command_buffers_[current_frame_], image_index);
 
-    VkSemaphore wait_semaphores[] = {get_image_semaphores[current_frame]};
-    VkSemaphore signal_semaphores[] = {image_render_semaphores[current_frame]};
+    VkSemaphore wait_semaphores[] = {get_image_semaphores_[current_frame_]};
+    VkSemaphore signal_semaphores[] = {image_render_semaphores_[current_frame_]};
     VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
     VkSubmitInfo submit_info{};
@@ -82,10 +82,10 @@ void Acvv::draw_frame()
     submit_info.pWaitSemaphores = wait_semaphores;
     submit_info.pWaitDstStageMask = wait_stages;
     submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &command_buffers_[current_frame];
+    submit_info.pCommandBuffers = &command_buffers_[current_frame_];
     submit_info.signalSemaphoreCount = 1;
     submit_info.pSignalSemaphores = signal_semaphores;
-    vkQueueSubmit(graphics_queue_, 1, &submit_info, frame_fence[current_frame]);
+    vkQueueSubmit(graphics_queue_, 1, &submit_info, frame_fence_[current_frame_]);
 
     VkSwapchainKHR swapchains[] = {swapchain_};
     VkPresentInfoKHR present_info{};
@@ -97,5 +97,5 @@ void Acvv::draw_frame()
     present_info.pImageIndices = &image_index;
 
     vkQueuePresentKHR(present_queue_, &present_info);
-    current_frame = (current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
+    current_frame_ = (current_frame_ + 1) % MAX_FRAMES_IN_FLIGHT;
 }

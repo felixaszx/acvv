@@ -82,10 +82,13 @@ class Acvv
     std::vector<VkDeviceMemory> uniform_buffers_memory_{};
     std::vector<void*> uniform_buffers_map_{};
 
-    uint32_t current_frame = 0;
-    std::vector<VkSemaphore> get_image_semaphores{};
-    std::vector<VkSemaphore> image_render_semaphores{};
-    std::vector<VkFence> frame_fence{};
+    uint32_t current_frame_ = 0;
+    std::vector<VkSemaphore> get_image_semaphores_{};
+    std::vector<VkSemaphore> image_render_semaphores_{};
+    std::vector<VkFence> frame_fence_{};
+
+    VkImage texture_image_ = VK_NULL_HANDLE;
+    VkDeviceMemory texture_image_memory_ = VK_NULL_HANDLE;
 
   public:
     void run();

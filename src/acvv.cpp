@@ -48,6 +48,8 @@ void Acvv::init_vulkan()
     create_index_buffer();
     create_uniform_buffer();
     create_descriptor_pool();
+
+    create_texture_image();
 }
 
 void Acvv::main_loop()
@@ -84,9 +86,9 @@ void Acvv::cleanup()
 
     for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        vkDestroySemaphore(device_, get_image_semaphores[i], nullptr);
-        vkDestroySemaphore(device_, image_render_semaphores[i], nullptr);
-        vkDestroyFence(device_, frame_fence[i], nullptr);
+        vkDestroySemaphore(device_, get_image_semaphores_[i], nullptr);
+        vkDestroySemaphore(device_, image_render_semaphores_[i], nullptr);
+        vkDestroyFence(device_, frame_fence_[i], nullptr);
     }
     vkDestroyCommandPool(device_, command_pool_, nullptr);
     vkDestroyDevice(device_, nullptr);
