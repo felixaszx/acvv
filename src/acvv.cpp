@@ -42,14 +42,12 @@ void Acvv::init_vulkan()
     create_framebuffers();
 
     create_command_buffer();
+    
     create_texture_image();
-
     create_vertex_buffer();
     create_index_buffer();
     create_uniform_buffer();
     create_descriptor_pool();
-
-    create_texture_image();
 }
 
 void Acvv::main_loop()
@@ -65,6 +63,9 @@ void Acvv::main_loop()
 void Acvv::cleanup()
 {
     clear_swapchain();
+
+    vkDestroyImage(device_, texture_image_, nullptr);
+    vkFreeMemory(device_, texture_image_memory_, nullptr);
 
     vkDestroyDescriptorPool(device_, descriptor_pool_, nullptr);
     vkDestroyDescriptorSetLayout(device_, descriptor_set_layout_, nullptr);
@@ -121,34 +122,47 @@ uint32_t Acvv::find_memory_type(uint32_t type, VkMemoryPropertyFlags properties)
 
 void Acvv::copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size)
 {
+    VkCommandBuffer copy_command_buffer = begin_single_commandbuffer();
+
+    VkBufferCopy copy_region{};
+    copy_region.size = size;
+    vkCmdCopyBuffer(copy_command_buffer, src_buffer, dst_buffer, 1, &copy_region);
+
+    end_single_commandbuffer(copy_command_buffer);
+}
+
+VkCommandBuffer Acvv::begin_single_commandbuffer()
+{
     VkCommandBufferAllocateInfo alloc_info{};
     alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     alloc_info.commandPool = command_pool_;
     alloc_info.commandBufferCount = 1;
 
-    VkCommandBuffer copy_command_buffer{};
-    vkAllocateCommandBuffers(device_, &alloc_info, &copy_command_buffer);
+    VkCommandBuffer commandbuffer;
+    vkAllocateCommandBuffers(device_, &alloc_info, &commandbuffer);
 
     VkCommandBufferBeginInfo begin_info{};
     begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-    vkBeginCommandBuffer(copy_command_buffer, &begin_info);
+    vkBeginCommandBuffer(commandbuffer, &begin_info);
+    return commandbuffer;
+}
 
-    VkBufferCopy copy_region{};
-    copy_region.size = size;
-    vkCmdCopyBuffer(copy_command_buffer, src_buffer, dst_buffer, 1, &copy_region);
-    vkEndCommandBuffer(copy_command_buffer);
+void Acvv::end_single_commandbuffer(VkCommandBuffer commandbuffer)
+{
+    vkEndCommandBuffer(commandbuffer);
 
     VkSubmitInfo submit_info{};
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &copy_command_buffer;
+    submit_info.pCommandBuffers = &commandbuffer;
+
     vkQueueSubmit(graphics_queue_, 1, &submit_info, VK_NULL_HANDLE);
     vkQueueWaitIdle(graphics_queue_);
 
-    vkFreeCommandBuffers(device_, command_pool_, 1, &copy_command_buffer);
+    vkFreeCommandBuffers(device_, command_pool_, 1, &commandbuffer);
 }
 
 void Acvv::create_buffer(VkDeviceSize size,                                          //
