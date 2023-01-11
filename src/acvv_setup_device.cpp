@@ -22,6 +22,10 @@ void Acvv::setup_device()
 
         bool exts_supported = false;
         bool swapchain_adaquate = false;
+
+        VkPhysicalDeviceFeatures supported_feature{};
+        vkGetPhysicalDeviceFeatures(device, &supported_feature);
+
         std::set<std::string> required_exts(REQUIRED_DEVICE_EXTS.begin(), REQUIRED_DEVICE_EXTS.end());
         for (const VkExtensionProperties& ext : supported_exts)
         {
@@ -42,19 +46,16 @@ void Acvv::setup_device()
             vkGetPhysicalDeviceSurfaceSupportKHR(device, index, surface_, &present_support);
 
             if (queue_properties[index].queueFlags & VK_QUEUE_GRAPHICS_BIT //
-                && present_support && swapchain_adaquate && exts_supported)
+                && present_support && swapchain_adaquate && exts_supported //
+                && supported_feature.samplerAnisotropy)
             {
                 queue_family_indices.graphics = index;
                 queue_family_indices.present = index;
                 devie_found = true;
                 physical_device_ = device;
+
                 break;
             }
-        }
-
-        if (devie_found)
-        {
-            break;
         }
     }
 
@@ -79,6 +80,7 @@ void Acvv::setup_device()
     }
 
     VkPhysicalDeviceFeatures device_features{};
+    device_features.samplerAnisotropy = VK_TRUE;
 
     VkDeviceCreateInfo device_create_info{};
     device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

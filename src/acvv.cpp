@@ -43,8 +43,11 @@ void Acvv::init_vulkan()
     create_framebuffers();
 
     create_command_buffer();
-    
+
     create_texture_image();
+    create_texture_imageview();
+    create_texture_sampler();
+
     create_vertex_buffer();
     create_index_buffer();
     create_uniform_buffer();
@@ -65,6 +68,8 @@ void Acvv::cleanup()
 {
     clear_swapchain();
 
+    vkDestroySampler(device_, textue_sampler_, nullptr);
+    vkDestroyImageView(device_, texture_imageview_, nullptr);
     vkDestroyImage(device_, texture_image_, nullptr);
     vkFreeMemory(device_, texture_image_memory_, nullptr);
 
