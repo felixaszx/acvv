@@ -3,7 +3,7 @@
 void Acvv::create_render_pass()
 {
     VkAttachmentDescription color_attachment{};
-    color_attachment.format = swapchain_image_format_;
+    color_attachment.format = swapchain_.image_format_;
     color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
     color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -37,5 +37,5 @@ void Acvv::create_render_pass()
     create_info.dependencyCount = 1;
     create_info.pDependencies = &dependency;
 
-    vkCreateRenderPass(device_, &create_info, nullptr, &render_pass_);
+    vkCreateRenderPass(device_layer_, &create_info, nullptr, &render_pass_);
 }

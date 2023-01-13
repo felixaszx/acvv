@@ -11,7 +11,7 @@ void Acvv::record_command(VkCommandBuffer command_buffer, uint32_t image_index)
     render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     render_pass_info.renderPass = render_pass_;
     render_pass_info.framebuffer = swapchain_framebuffers_[image_index];
-    render_pass_info.renderArea.extent = swapchain_extend_;
+    render_pass_info.renderArea.extent = swapchain_.extend_;
     render_pass_info.clearValueCount = 1;
     render_pass_info.pClearValues = &clear_color;
     vkCmdBeginRenderPass(command_buffer, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
@@ -23,14 +23,14 @@ void Acvv::record_command(VkCommandBuffer command_buffer, uint32_t image_index)
     vkCmdBindIndexBuffer(command_buffer, index_buffer_, 0, VK_INDEX_TYPE_UINT16);
 
     VkViewport viewport{};
-    viewport.width = castt(uint32_t, swapchain_extend_.width);
-    viewport.height = castt(uint32_t, swapchain_extend_.height);
+    viewport.width = castt(uint32_t, swapchain_.extend_.width);
+    viewport.height = castt(uint32_t, swapchain_.extend_.height);
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
     vkCmdSetViewport(command_buffer, 0, 1, &viewport);
 
     VkRect2D scissor{};
-    scissor.extent = swapchain_extend_;
+    scissor.extent = swapchain_.extend_;
     vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
     vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_Layout_, 0, 1,
@@ -51,22 +51,22 @@ void Acvv::update_ubo(uint32_t current_image)
     ubo.model = vkm::rotate(vkm::mat4(1.0f), time * vkm::radians(90.0f), vkm::vec3(0, 0, 1));
     ubo.view = vkm::lookAt(vkm::vec3(2.0f, 2.0f, 2.0f), vkm::vec3(0.0f, 0.0f, 0.0f), vkm::vec3(0.0f, 0.0f, 1.0f));
     ubo.proj =
-        vkm::perspective(vkm::radians(45.0f), swapchain_extend_.width / (float)swapchain_extend_.height, 0.1f, 10.0f);
+        vkm::perspective(vkm::radians(45.0f), swapchain_.extend_.width / (float)swapchain_.extend_.height, 0.1f, 10.0f);
 
     memcpy(uniform_buffers_map_[current_image], &ubo, sizeof(ubo));
 }
 
 void Acvv::draw_frame()
 {
-    if (vkWaitForFences(device_, 1, &frame_fence_[current_frame_], VK_TRUE, UINT64_MAX) != VK_SUCCESS)
+    if (vkWaitForFences(device_layer_, 1, &frame_fence_[current_frame_], VK_TRUE, UINT64_MAX) != VK_SUCCESS)
     {
         throw std::runtime_error("in flight fence error\n");
     }
 
     uint32_t image_index = 0;
-    vkAcquireNextImageKHR(device_, swapchain_, UINT64_MAX, get_image_semaphores_[current_frame_], VK_NULL_HANDLE,
+    vkAcquireNextImageKHR(device_layer_, swapchain_, UINT64_MAX, get_image_semaphores_[current_frame_], VK_NULL_HANDLE,
                           &image_index);
-    vkResetFences(device_, 1, &frame_fence_[current_frame_]);
+    vkResetFences(device_layer_, 1, &frame_fence_[current_frame_]);
 
     update_ubo(current_frame_);
     vkResetCommandBuffer(command_buffers_[current_frame_], 0);
@@ -85,7 +85,7 @@ void Acvv::draw_frame()
     submit_info.pCommandBuffers = &command_buffers_[current_frame_];
     submit_info.signalSemaphoreCount = 1;
     submit_info.pSignalSemaphores = signal_semaphores;
-    vkQueueSubmit(graphics_queue_, 1, &submit_info, frame_fence_[current_frame_]);
+    vkQueueSubmit(device_layer_.graphics_queue_, 1, &submit_info, frame_fence_[current_frame_]);
 
     VkSwapchainKHR swapchains[] = {swapchain_};
     VkPresentInfoKHR present_info{};
@@ -96,6 +96,6 @@ void Acvv::draw_frame()
     present_info.pSwapchains = swapchains;
     present_info.pImageIndices = &image_index;
 
-    vkQueuePresentKHR(present_queue_, &present_info);
+    vkQueuePresentKHR(device_layer_.present_queue_, &present_info);
     current_frame_ = (current_frame_ + 1) % MAX_FRAMES_IN_FLIGHT;
 }

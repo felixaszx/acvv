@@ -1,5 +1,3 @@
-#define STB_IMAGE_IMPLEMENTATION
-#define VMA_IMPLEMENTATION
 #include "acvv.hpp"
 
 void Acvv::run()
@@ -12,11 +10,9 @@ void Acvv::run()
 
 void Acvv::init_window()
 {
-    glfwInit();
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    window_ = glfwCreateWindow(WIDTH, HEIGHT, "vk", nullptr, nullptr);
-    glfwSetWindowUserPointer(window_, this);
-    glfwSetFramebufferSizeCallback(window_,
+    base_layer_.create("vk");
+    glfwSetWindowUserPointer(base_layer_, this);
+    glfwSetFramebufferSizeCallback(base_layer_,
                                    [](GLFWwindow* window, int width, int height)
                                    {
                                        Acvv* app = reinterpret_cast<Acvv*>(glfwGetWindowUserPointer(window));
@@ -24,16 +20,25 @@ void Acvv::init_window()
                                        {
                                            glfwWaitEvents();
                                        }
-                                       app->reset_swapchain();
+
+                                       vkDeviceWaitIdle(app->device_layer_);
+                                       for (auto framebuffer : app->swapchain_framebuffers_)
+                                       {
+                                           vkDestroyFramebuffer(app->device_layer_, framebuffer, nullptr);
+                                       }
+                                       app->swapchain_.destroy(app->device_layer_);
+
+                                       app->swapchain_.create(app->base_layer_, app->base_layer_, app->device_layer_);
+                                       app->swapchain_.create_image_view(app->device_layer_);
+                                       app->create_framebuffers();
                                    });
 }
 
 void Acvv::init_vulkan()
 {
-    create_instance();
-    setup_device();
-    create_swapchain();
-    get_swapchain_imageviews();
+    device_layer_.create(base_layer_);
+    swapchain_.create(base_layer_, base_layer_, device_layer_);
+    swapchain_.create_image_view(device_layer_);
 
     create_render_pass();
     setup_descriptor_set_layout();
@@ -56,64 +61,61 @@ void Acvv::init_vulkan()
 
 void Acvv::main_loop()
 {
-    while (!glfwWindowShouldClose(window_))
+    while (!glfwWindowShouldClose(base_layer_))
     {
         glfwPollEvents();
         draw_frame();
     }
-    vkDeviceWaitIdle(device_);
+    vkDeviceWaitIdle(device_layer_);
 }
 
 void Acvv::cleanup()
 {
-    clear_swapchain();
+    for (auto framebuffer : swapchain_framebuffers_)
+    {
+        vkDestroyFramebuffer(device_layer_, framebuffer, nullptr);
+    }
+    swapchain_.destroy(device_layer_);
 
-    vkDestroySampler(device_, textue_sampler_, nullptr);
-    vkDestroyImageView(device_, texture_imageview_, nullptr);
-    vkDestroyImage(device_, texture_image_, nullptr);
-    vkFreeMemory(device_, texture_image_memory_, nullptr);
+    vkDestroySampler(device_layer_, textue_sampler_, nullptr);
+    vkDestroyImageView(device_layer_, texture_imageview_, nullptr);
+    vkDestroyImage(device_layer_, texture_image_, nullptr);
+    vkFreeMemory(device_layer_, texture_image_memory_, nullptr);
 
-    vkDestroyDescriptorPool(device_, descriptor_pool_, nullptr);
-    vkDestroyDescriptorSetLayout(device_, descriptor_set_layout_, nullptr);
+    vkDestroyDescriptorPool(device_layer_, descriptor_pool_, nullptr);
+    vkDestroyDescriptorSetLayout(device_layer_, descriptor_set_layout_, nullptr);
 
-    vkDestroyBuffer(device_, vertex_buffer_, nullptr);
-    vkFreeMemory(device_, vertex_buffer_memory_, nullptr);
+    vkDestroyBuffer(device_layer_, vertex_buffer_, nullptr);
+    vkFreeMemory(device_layer_, vertex_buffer_memory_, nullptr);
 
-    vkDestroyBuffer(device_, index_buffer_, nullptr);
-    vkFreeMemory(device_, index_buffer_memory_, nullptr);
+    vkDestroyBuffer(device_layer_, index_buffer_, nullptr);
+    vkFreeMemory(device_layer_, index_buffer_memory_, nullptr);
 
-    vkDestroyPipeline(device_, graphics_pipeline_, nullptr);
+    vkDestroyPipeline(device_layer_, graphics_pipeline_, nullptr);
     for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        vkDestroyBuffer(device_, uniform_buffers_[i], nullptr);
-        vkFreeMemory(device_, uniform_buffers_memory_[i], nullptr);
+        vkDestroyBuffer(device_layer_, uniform_buffers_[i], nullptr);
+        vkFreeMemory(device_layer_, uniform_buffers_memory_[i], nullptr);
     }
-    vkDestroyPipelineLayout(device_, pipeline_Layout_, nullptr);
-    vkDestroyRenderPass(device_, render_pass_, nullptr);
+    vkDestroyPipelineLayout(device_layer_, pipeline_Layout_, nullptr);
+    vkDestroyRenderPass(device_layer_, render_pass_, nullptr);
 
     for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        vkDestroySemaphore(device_, get_image_semaphores_[i], nullptr);
-        vkDestroySemaphore(device_, image_render_semaphores_[i], nullptr);
-        vkDestroyFence(device_, frame_fence_[i], nullptr);
+        vkDestroySemaphore(device_layer_, get_image_semaphores_[i], nullptr);
+        vkDestroySemaphore(device_layer_, image_render_semaphores_[i], nullptr);
+        vkDestroyFence(device_layer_, frame_fence_[i], nullptr);
     }
-    vkDestroyCommandPool(device_, command_pool_, nullptr);
-    vkDestroyDevice(device_, nullptr);
+    vkDestroyCommandPool(device_layer_, command_pool_, nullptr);
 
-    auto load_func = load_ext_function<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr, instance_,
-                                                                            "vkDestroyDebugUtilsMessengerEXT");
-    load_func(instance_, messenger_, nullptr);
-    vkDestroySurfaceKHR(instance_, surface_, nullptr);
-    vkDestroyInstance(instance_, nullptr);
-
-    glfwDestroyWindow(window_);
-    glfwTerminate();
+    device_layer_.destroy();
+    base_layer_.destroy();
 }
 
 uint32_t Acvv::find_memory_type(uint32_t type, VkMemoryPropertyFlags properties)
 {
     VkPhysicalDeviceMemoryProperties mem_prop{};
-    vkGetPhysicalDeviceMemoryProperties(physical_device_, &mem_prop);
+    vkGetPhysicalDeviceMemoryProperties(device_layer_, &mem_prop);
 
     for (uint32_t i = 0; i < mem_prop.memoryTypeCount; i++)
     {
@@ -146,7 +148,7 @@ VkCommandBuffer Acvv::begin_single_commandbuffer()
     alloc_info.commandBufferCount = 1;
 
     VkCommandBuffer commandbuffer;
-    vkAllocateCommandBuffers(device_, &alloc_info, &commandbuffer);
+    vkAllocateCommandBuffers(device_layer_, &alloc_info, &commandbuffer);
 
     VkCommandBufferBeginInfo begin_info{};
     begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -165,10 +167,10 @@ void Acvv::end_single_commandbuffer(VkCommandBuffer commandbuffer)
     submit_info.commandBufferCount = 1;
     submit_info.pCommandBuffers = &commandbuffer;
 
-    vkQueueSubmit(graphics_queue_, 1, &submit_info, VK_NULL_HANDLE);
-    vkQueueWaitIdle(graphics_queue_);
+    vkQueueSubmit(device_layer_.graphics_queue_, 1, &submit_info, VK_NULL_HANDLE);
+    vkQueueWaitIdle(device_layer_.graphics_queue_);
 
-    vkFreeCommandBuffers(device_, command_pool_, 1, &commandbuffer);
+    vkFreeCommandBuffers(device_layer_, command_pool_, 1, &commandbuffer);
 }
 
 void Acvv::create_buffer(VkDeviceSize size,                                          //
@@ -180,95 +182,16 @@ void Acvv::create_buffer(VkDeviceSize size,                                     
     buffer_info.size = size;
     buffer_info.usage = usage;
     buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    vkCreateBuffer(device_, &buffer_info, nullptr, &buffer);
+    vkCreateBuffer(device_layer_, &buffer_info, nullptr, &buffer);
 
     VkMemoryRequirements mem_requires{};
-    vkGetBufferMemoryRequirements(device_, buffer, &mem_requires);
+    vkGetBufferMemoryRequirements(device_layer_, buffer, &mem_requires);
 
     VkMemoryAllocateInfo alloc_info{};
     alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     alloc_info.allocationSize = mem_requires.size;
     alloc_info.memoryTypeIndex = find_memory_type(mem_requires.memoryTypeBits, properties);
 
-    vkAllocateMemory(device_, &alloc_info, nullptr, &buffer_memory);
-    vkBindBufferMemory(device_, buffer, buffer_memory, 0);
-}
-
-bool check_validation_layer_support()
-{
-    uint32_t layer_count;
-    vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
-    std::vector<VkLayerProperties> layer_present(layer_count);
-    vkEnumerateInstanceLayerProperties(&layer_count, layer_present.data());
-
-    for (const char* layer_name : VALIDATION_LAYERS)
-    {
-        bool layer_found = false;
-        for (const auto& layer_properties : layer_present)
-        {
-            if (!strcmp(layer_name, layer_properties.layerName))
-            {
-                layer_found = true;
-                break;
-            }
-        }
-
-        if (!layer_found)
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-VkBool32 VKAPI_CALL debug_cb(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-                             VkDebugUtilsMessageTypeFlagsEXT messageType,
-                             const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
-{
-    auto type = [messageSeverity]()
-    {
-        switch (messageSeverity)
-        {
-            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-            {
-                return "WARNING";
-            }
-            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-            {
-                return "ERROR";
-            }
-            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-            {
-                return "INFO";
-            }
-            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-            {
-                return "VERBOSE";
-            }
-            default:
-            {
-                return "UNDEFINE";
-            }
-        }
-    };
-    std::cerr << fmt::format("[Vulkan Validation Layer: {}] {}\n\n", type(), pCallbackData->pMessage);
-
-    return VK_FALSE;
-}
-
-std::vector<const char*> get_required_exts()
-{
-    uint32_t glfwExtCount = 0;
-    const char** glfwExts = nullptr;
-    glfwExts = glfwGetRequiredInstanceExtensions(&glfwExtCount);
-
-    std::vector<const char*> exts(glfwExts, glfwExts + glfwExtCount);
-
-    if (ENABLE_VALIDATION_LAYERS)
-    {
-        exts.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-    }
-
-    return exts;
+    vkAllocateMemory(device_layer_, &alloc_info, nullptr, &buffer_memory);
+    vkBindBufferMemory(device_layer_, buffer, buffer_memory, 0);
 }

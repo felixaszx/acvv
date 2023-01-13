@@ -8,7 +8,7 @@ VkShaderModule Acvv::create_shader_module(const std::vector<char>& code)
     create_info.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
     VkShaderModule tmp_module = VK_NULL_HANDLE;
-    vkCreateShaderModule(device_, &create_info, nullptr, &tmp_module);
+    vkCreateShaderModule(device_layer_, &create_info, nullptr, &tmp_module);
 
     return tmp_module;
 }
@@ -85,7 +85,7 @@ void Acvv::create_graphics_pipeline()
     pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipeline_layout_info.setLayoutCount = 1;
     pipeline_layout_info.pSetLayouts = &descriptor_set_layout_;
-    vkCreatePipelineLayout(device_, &pipeline_layout_info, nullptr, &pipeline_Layout_);
+    vkCreatePipelineLayout(device_layer_, &pipeline_layout_info, nullptr, &pipeline_Layout_);
 
     VkGraphicsPipelineCreateInfo pipeline_info{};
     pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -102,8 +102,8 @@ void Acvv::create_graphics_pipeline()
     pipeline_info.renderPass = render_pass_;
     pipeline_info.subpass = 0;
 
-    vkCreateGraphicsPipelines(device_, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &graphics_pipeline_);
+    vkCreateGraphicsPipelines(device_layer_, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &graphics_pipeline_);
 
-    vkDestroyShaderModule(device_, vert_shader_module, nullptr);
-    vkDestroyShaderModule(device_, frag_shader_module, nullptr);
+    vkDestroyShaderModule(device_layer_, vert_shader_module, nullptr);
+    vkDestroyShaderModule(device_layer_, frag_shader_module, nullptr);
 }

@@ -11,9 +11,9 @@ void Acvv::create_index_buffer()
                   staging_buffer, stagine_memory);
 
     void* data = nullptr;
-    vkMapMemory(device_, stagine_memory, 0, size, 0, &data);
+    vkMapMemory(device_layer_, stagine_memory, 0, size, 0, &data);
     memcpy(data, indices.data(), size);
-    vkUnmapMemory(device_, stagine_memory);
+    vkUnmapMemory(device_layer_, stagine_memory);
 
     create_buffer(size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, //
@@ -21,8 +21,8 @@ void Acvv::create_index_buffer()
 
     copy_buffer(staging_buffer, index_buffer_, size);
 
-    vkDestroyBuffer(device_, staging_buffer, nullptr);
-    vkFreeMemory(device_, stagine_memory, nullptr);
+    vkDestroyBuffer(device_layer_, staging_buffer, nullptr);
+    vkFreeMemory(device_layer_, stagine_memory, nullptr);
 }
 
 void Acvv::create_vertex_buffer()
@@ -36,9 +36,9 @@ void Acvv::create_vertex_buffer()
                   staging_buffer, stagine_memory);
 
     void* data = nullptr;
-    vkMapMemory(device_, stagine_memory, 0, size, 0, &data);
+    vkMapMemory(device_layer_, stagine_memory, 0, size, 0, &data);
     memcpy(data, vertices.data(), size);
-    vkUnmapMemory(device_, stagine_memory);
+    vkUnmapMemory(device_layer_, stagine_memory);
 
     create_buffer(size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, //
@@ -46,6 +46,6 @@ void Acvv::create_vertex_buffer()
 
     copy_buffer(staging_buffer, vertex_buffer_, size);
 
-    vkDestroyBuffer(device_, staging_buffer, nullptr);
-    vkFreeMemory(device_, stagine_memory, nullptr);
+    vkDestroyBuffer(device_layer_, staging_buffer, nullptr);
+    vkFreeMemory(device_layer_, stagine_memory, nullptr);
 }

@@ -21,7 +21,7 @@ void Acvv::setup_descriptor_set_layout()
     create_info.bindingCount = 2;
     create_info.pBindings = bindings.data();
 
-    vkCreateDescriptorSetLayout(device_, &create_info, nullptr, &descriptor_set_layout_);
+    vkCreateDescriptorSetLayout(device_layer_, &create_info, nullptr, &descriptor_set_layout_);
 }
 
 void Acvv::create_uniform_buffer()
@@ -38,7 +38,7 @@ void Acvv::create_uniform_buffer()
                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniform_buffers_[i],
                       uniform_buffers_memory_[i]);
 
-        vkMapMemory(device_, uniform_buffers_memory_[i], 0, size, 0, &uniform_buffers_map_[i]);
+        vkMapMemory(device_layer_, uniform_buffers_memory_[i], 0, size, 0, &uniform_buffers_map_[i]);
     }
 }
 
@@ -55,7 +55,7 @@ void Acvv::create_descriptor_pool()
     pool_info.poolSizeCount = castt(uint32_t, pool_sizes.size());
     pool_info.pPoolSizes = pool_sizes.data();
     pool_info.maxSets = MAX_FRAMES_IN_FLIGHT;
-    vkCreateDescriptorPool(device_, &pool_info, nullptr, &descriptor_pool_);
+    vkCreateDescriptorPool(device_layer_, &pool_info, nullptr, &descriptor_pool_);
 
     std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptor_set_layout_);
     VkDescriptorSetAllocateInfo alloc_info{};
@@ -64,7 +64,7 @@ void Acvv::create_descriptor_pool()
     alloc_info.descriptorSetCount = MAX_FRAMES_IN_FLIGHT;
     alloc_info.pSetLayouts = layouts.data();
     descriptor_set_.resize(MAX_FRAMES_IN_FLIGHT);
-    vkAllocateDescriptorSets(device_, &alloc_info, descriptor_set_.data());
+    vkAllocateDescriptorSets(device_layer_, &alloc_info, descriptor_set_.data());
 
     for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
@@ -96,7 +96,7 @@ void Acvv::create_descriptor_pool()
         descriptor_writes[1].descriptorCount = 1;
         descriptor_writes[1].pImageInfo = &image_info;
 
-        vkUpdateDescriptorSets(device_, castt(uint32_t, descriptor_writes.size()), descriptor_writes.data(), 0,
+        vkUpdateDescriptorSets(device_layer_, castt(uint32_t, descriptor_writes.size()), descriptor_writes.data(), 0,
                                nullptr);
     }
 }

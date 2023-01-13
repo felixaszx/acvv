@@ -1,11 +1,11 @@
-#include "acvv.hpp"
+#include "ve_device.hpp"
 
-void Acvv::setup_device()
+void VeDeviceLayer::find_device(VeBaseLayer& base_Layer)
 {
     uint32_t physical_deviec_count = 0;
-    vkEnumeratePhysicalDevices(instance_, &physical_deviec_count, nullptr);
+    vkEnumeratePhysicalDevices(base_Layer, &physical_deviec_count, nullptr);
     std::vector<VkPhysicalDevice> physical_devices(physical_deviec_count);
-    vkEnumeratePhysicalDevices(instance_, &physical_deviec_count, physical_devices.data());
+    vkEnumeratePhysicalDevices(base_Layer, &physical_deviec_count, physical_devices.data());
 
     bool devie_found = false;
     for (const VkPhysicalDevice& device : physical_devices)
@@ -34,16 +34,16 @@ void Acvv::setup_device()
         exts_supported = required_exts.empty();
 
         uint32_t surface_format_count = 0;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface_, &surface_format_count, nullptr);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, base_Layer, &surface_format_count, nullptr);
 
         uint32_t present_modes_count = 0;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface_, &present_modes_count, nullptr);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, base_Layer, &present_modes_count, nullptr);
         swapchain_adaquate = (present_modes_count != 0 && surface_format_count != 0);
 
         for (uint32_t index = 0; index < queue_properties.size(); index++)
         {
             VkBool32 present_support = VK_FALSE;
-            vkGetPhysicalDeviceSurfaceSupportKHR(device, index, surface_, &present_support);
+            vkGetPhysicalDeviceSurfaceSupportKHR(device, index, base_Layer, &present_support);
 
             if (queue_properties[index].queueFlags & VK_QUEUE_GRAPHICS_BIT //
                 && present_support && swapchain_adaquate && exts_supported //
@@ -52,7 +52,7 @@ void Acvv::setup_device()
                 queue_family_indices.graphics = index;
                 queue_family_indices.present = index;
                 devie_found = true;
-                physical_device_ = device;
+                *this = device;
 
                 break;
             }
@@ -63,6 +63,11 @@ void Acvv::setup_device()
     {
         throw std::runtime_error("No Device is suitable for Vulkan\n");
     }
+}
+
+void VeDeviceLayer::create(VeBaseLayer& base_Layer)
+{
+    find_device(base_Layer);
 
     std::vector<VkDeviceQueueCreateInfo> queue_create_infos{};
     std::set<uint32_t> unique_queue_families = {queue_family_indices.graphics, queue_family_indices.present};
@@ -85,24 +90,24 @@ void Acvv::setup_device()
     VkDeviceCreateInfo device_create_info{};
     device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     device_create_info.pEnabledFeatures = &device_features;
-    device_create_info.queueCreateInfoCount = castt(uint32_t, queue_create_infos.size());
+    device_create_info.queueCreateInfoCount = casts(uint32_t, queue_create_infos.size());
     device_create_info.pQueueCreateInfos = queue_create_infos.data();
-    device_create_info.enabledExtensionCount = castt(uint32_t, REQUIRED_DEVICE_EXTS.size());
+    device_create_info.enabledExtensionCount = casts(uint32_t, REQUIRED_DEVICE_EXTS.size());
     device_create_info.ppEnabledExtensionNames = REQUIRED_DEVICE_EXTS.data();
 
-    if (ENABLE_VALIDATION_LAYERS)
+    if (base_Layer.ENABLE_VALIDATION_LAYERS)
     {
-        device_create_info.enabledLayerCount = castt(uint32_t, VALIDATION_LAYERS.size());
-        device_create_info.ppEnabledLayerNames = VALIDATION_LAYERS.data();
+        device_create_info.enabledLayerCount = casts(uint32_t, base_Layer.VALIDATION_LAYERS.size());
+        device_create_info.ppEnabledLayerNames = base_Layer.VALIDATION_LAYERS.data();
     }
 
-    if (vkCreateDevice(physical_device_, &device_create_info, nullptr, &device_) != VK_SUCCESS)
+    if (vkCreateDevice(*this, &device_create_info, nullptr, this->ptr()) != VK_SUCCESS)
     {
         throw std::runtime_error("Do not create vulkan device\n");
     }
 
-    vkGetDeviceQueue(device_, queue_family_indices.graphics, 0, &graphics_queue_);
-    vkGetDeviceQueue(device_, queue_family_indices.present, 0, &present_queue_);
+    vkGetDeviceQueue(*this, queue_family_indices.graphics, 0, &graphics_queue_);
+    vkGetDeviceQueue(*this, queue_family_indices.present, 0, &present_queue_);
 
     VmaVulkanFunctions vma_functions{};
     vma_functions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
@@ -113,9 +118,15 @@ void Acvv::setup_device()
     VmaAllocatorCreateInfo vma_create_info{};
     vma_create_info.vulkanApiVersion = VK_API_VERSION_1_3;
     vma_create_info.pVulkanFunctions = &vma_functions;
-    vma_create_info.instance = instance_;
-    vma_create_info.physicalDevice = physical_device_;
-    vma_create_info.device = device_;
+    vma_create_info.instance = base_Layer;
+    vma_create_info.physicalDevice = *this;
+    vma_create_info.device = *this;
 
-    vmaCreateAllocator(&vma_create_info, &vma_allocator_);
+    vmaCreateAllocator(&vma_create_info, this->ptr());
+}
+
+void VeDeviceLayer::destroy()
+{
+    vmaDestroyAllocator(*this);
+    vkDestroyDevice(*this, nullptr);
 }

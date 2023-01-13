@@ -90,9 +90,9 @@ void Acvv::create_texture_image()
                   stagine_buffer, staging_memory);
 
     void* data;
-    vkMapMemory(device_, staging_memory, 0, size, 0, &data);
+    vkMapMemory(device_layer_, staging_memory, 0, size, 0, &data);
     memcpy(data, pixel, castt(size_t, size));
-    vkUnmapMemory(device_, staging_memory);
+    vkUnmapMemory(device_layer_, staging_memory);
 
     stbi_image_free(pixel);
 
@@ -110,13 +110,13 @@ void Acvv::create_texture_image()
     image_create_info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
     image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
-    if (vkCreateImage(device_, &image_create_info, nullptr, &texture_image_) != VK_SUCCESS)
+    if (vkCreateImage(device_layer_, &image_create_info, nullptr, &texture_image_) != VK_SUCCESS)
     {
         throw std::runtime_error("Do not create image\n");
     }
 
     VkMemoryRequirements mem_requiredmemts{};
-    vkGetImageMemoryRequirements(device_, texture_image_, &mem_requiredmemts);
+    vkGetImageMemoryRequirements(device_layer_, texture_image_, &mem_requiredmemts);
 
     VkMemoryAllocateInfo allocate_info{};
     allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -124,11 +124,11 @@ void Acvv::create_texture_image()
     allocate_info.memoryTypeIndex =
         find_memory_type(mem_requiredmemts.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-    if (vkAllocateMemory(device_, &allocate_info, nullptr, &texture_image_memory_) != VK_SUCCESS)
+    if (vkAllocateMemory(device_layer_, &allocate_info, nullptr, &texture_image_memory_) != VK_SUCCESS)
     {
         throw std::runtime_error("Do not allocate textur ememory\n");
     }
-    vkBindImageMemory(device_, texture_image_, texture_image_memory_, 0);
+    vkBindImageMemory(device_layer_, texture_image_, texture_image_memory_, 0);
 
     transition_image_layout(texture_image_, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -136,8 +136,8 @@ void Acvv::create_texture_image()
     transition_image_layout(texture_image_, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-    vkDestroyBuffer(device_, stagine_buffer, nullptr);
-    vkFreeMemory(device_, staging_memory, nullptr);
+    vkDestroyBuffer(device_layer_, stagine_buffer, nullptr);
+    vkFreeMemory(device_layer_, staging_memory, nullptr);
 }
 
 void Acvv::create_texture_imageview()
@@ -153,7 +153,7 @@ void Acvv::create_texture_imageview()
     view_info.subresourceRange.baseArrayLayer = 0;
     view_info.subresourceRange.layerCount = 1;
 
-    if (vkCreateImageView(device_, &view_info, nullptr, &texture_imageview_) != VK_SUCCESS)
+    if (vkCreateImageView(device_layer_, &view_info, nullptr, &texture_imageview_) != VK_SUCCESS)
     {
         throw std::runtime_error("Error: do not create image view");
     }
@@ -171,7 +171,7 @@ void Acvv::create_texture_sampler()
     sampler_info.anisotropyEnable = VK_TRUE;
 
     VkPhysicalDeviceProperties properties{};
-    vkGetPhysicalDeviceProperties(physical_device_, &properties);
+    vkGetPhysicalDeviceProperties(device_layer_, &properties);
     sampler_info.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
     sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
     sampler_info.unnormalizedCoordinates = VK_FALSE;
@@ -182,7 +182,7 @@ void Acvv::create_texture_sampler()
     sampler_info.minLod = 0.0f;
     sampler_info.maxLod = 0.0f;
 
-    if (vkCreateSampler(device_, &sampler_info, nullptr, &textue_sampler_) != VK_SUCCESS)
+    if (vkCreateSampler(device_layer_, &sampler_info, nullptr, &textue_sampler_) != VK_SUCCESS)
     {
         throw std::runtime_error("Do not create a sampler");
     }

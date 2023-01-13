@@ -1,24 +1,9 @@
 #ifndef ACVV_HPP
 #define ACVV_HPP
 
-#include <iostream>
-#include <string>
-#include <vector>
-#include <array>
-#include <set>
-#include <functional>
-#include <fstream>
-#include <chrono>
-
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-#include <vulkan/vulkan.h>
-#include <fmt/core.h>
-#include <stb/stb_image.h>
-
-#define VMA_STATIC_VULKAN_FUNCTIONS  0
-#define VMA_DYNAMIC_VULKAN_FUNCTIONS 1
-#include "vma.hpp"
+#include "ve_base.hpp"
+#include "ve_device.hpp"
+#include "ve_swapchain.hpp"
 
 #include "vkm.hpp"
 
@@ -26,45 +11,15 @@ inline const int WIDTH = 1200;
 inline const int HEIGHT = 900;
 inline const int MAX_FRAMES_IN_FLIGHT = 2;
 
-inline const std::vector<const char*> VALIDATION_LAYERS = {"VK_LAYER_KHRONOS_validation"};
-inline const std::vector<const char*> REQUIRED_DEVICE_EXTS = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
-#ifdef NDEBUG
-inline const bool ENABLE_VALIDATION_LAYERS = false;
-#else
-inline const bool ENABLE_VALIDATION_LAYERS = true;
-#endif
-
-#define castt(type, var) static_cast<type>(var)
-
-struct QueueFamilyIndex
-{
-    uint32_t graphics;
-    uint32_t present;
-};
+#define castt(type, var) casts(type, var)
 
 class Acvv
 {
   private:
-    GLFWwindow* window_ = nullptr;
+    VeBaseLayer base_layer_ = VeBaseLayer(1920, 1080);
+    VeDeviceLayer device_layer_;
 
-    VkInstance instance_ = VK_NULL_HANDLE;
-    VkDebugUtilsMessengerEXT messenger_ = VK_NULL_HANDLE;
-    VkSurfaceKHR surface_ = VK_NULL_HANDLE;
-
-    VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
-    VkDevice device_ = VK_NULL_HANDLE;
-    VmaAllocator vma_allocator_ = VK_NULL_HANDLE;
-
-    QueueFamilyIndex queue_family_indices{};
-    VkQueue graphics_queue_ = VK_NULL_HANDLE;
-    VkQueue present_queue_ = VK_NULL_HANDLE;
-
-    VkSwapchainKHR swapchain_ = VK_NULL_HANDLE;
-    VkFormat swapchain_image_format_{};
-    VkExtent2D swapchain_extend_{};
-    std::vector<VkImage> swapchain_images_{};
-    std::vector<VkImageView> swapchain_imageviews_{};
+    VeSwapchainBase swapchain_;
 
     VkRenderPass render_pass_ = VK_NULL_HANDLE;
     VkPipelineLayout pipeline_Layout_ = VK_NULL_HANDLE;
@@ -104,17 +59,6 @@ class Acvv
     void main_loop();
     void cleanup();
 
-    template <typename Func_t, typename GetFunc_t, typename... Args>
-    Func_t load_ext_function(GetFunc_t get_func, Args... args);
-    void create_instance();
-
-    void setup_device();
-
-    void create_swapchain();
-    void clear_swapchain();
-    void reset_swapchain();
-    void get_swapchain_imageviews();
-
     VkShaderModule create_shader_module(const std::vector<char>& code);
     void create_render_pass();
     void setup_descriptor_set_layout();
@@ -150,19 +94,6 @@ class Acvv
     void transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
     void copy_buffer_to_image(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 };
-
-bool check_validation_layer_support();
-std::vector<const char*> get_required_exts();
-VKAPI_ATTR VkBool32 VKAPI_CALL debug_cb(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,    //
-                                        VkDebugUtilsMessageTypeFlagsEXT messageType,               //
-                                        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, //
-                                        void* pUserData);
-
-template <typename Func_t, typename GetFunc_t, typename... Args>
-inline Func_t Acvv::load_ext_function(GetFunc_t get_func, Args... args)
-{
-    return (Func_t)get_func(args...);
-}
 
 inline std::vector<char> read_file(const std::string& file_name, std::ios_base::openmode mode)
 {
@@ -231,9 +162,9 @@ const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
 
 struct UniformBufferObject
 {
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 proj;
+    vkm::mat4 model;
+    vkm::mat4 view;
+    vkm::mat4 proj;
 };
 
 #endif // ACVV_HPP
