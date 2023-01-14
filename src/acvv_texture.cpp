@@ -3,7 +3,7 @@
 void Acvv::transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout)
 {
     VeSingleTimeCmdBase cmd;
-    cmd.begin(device_layer_);
+    cmd.begin(device_layer_, command_pool_);
 
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -47,13 +47,13 @@ void Acvv::transition_image_layout(VkImage image, VkFormat format, VkImageLayout
 
     vkCmdPipelineBarrier(cmd, src_stage, dst_stage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
-    cmd.end(device_layer_);
+    cmd.end(device_layer_, command_pool_);
 }
 
 void Acvv::copy_buffer_to_image(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 {
     VeSingleTimeCmdBase cmd;
-    cmd.begin(device_layer_);
+    cmd.begin(device_layer_, command_pool_);
 
     VkBufferImageCopy region{};
     region.bufferOffset = 0;
@@ -70,25 +70,17 @@ void Acvv::copy_buffer_to_image(VkBuffer buffer, VkImage image, uint32_t width, 
 
     vkCmdCopyBufferToImage(cmd, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-    cmd.end(device_layer_);
+    cmd.end(device_layer_, command_pool_);
 }
 
 void Acvv::create_texture_image()
 {
-    int width = 0;
-    int height = 0;
-    int channel = 0;
-    stbi_uc* pixel = stbi_load("res/texture.jpg", &width, &height, &channel, STBI_rgb_alpha);
-    if (pixel == nullptr)
-    {
-        throw std::runtime_error("Do not load texture\n");
-    }
-    VkDeviceSize size = width * height * 4;
+    ImagePixels image_pixels = load_pixel("res/texture.jpg", STBI_rgb_alpha);
 
     VeBufferBase staging_buffer;
     VkBufferCreateInfo staging_buffer_info{};
     staging_buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    staging_buffer_info.size = size;
+    staging_buffer_info.size = image_pixels.size;
     staging_buffer_info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
     staging_buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     VmaAllocationCreateInfo staging_alloc_info{};
@@ -99,16 +91,16 @@ void Acvv::create_texture_image()
 
     void* data = nullptr;
     vmaMapMemory(device_layer_, staging_buffer, &data);
-    memcpy(data, pixel, size);
+    memcpy(data, image_pixels.pixels, image_pixels.size);
     vmaUnmapMemory(device_layer_, staging_buffer);
 
-    stbi_image_free(pixel);
+    stbi_image_free(image_pixels.pixels);
 
     VkImageCreateInfo image_create_info{};
     image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     image_create_info.imageType = VK_IMAGE_TYPE_2D;
-    image_create_info.extent.width = castt(uint32_t, width);
-    image_create_info.extent.height = castt(uint32_t, height);
+    image_create_info.extent.width = castt(uint32_t, image_pixels.width);
+    image_create_info.extent.height = castt(uint32_t, image_pixels.height);
     image_create_info.extent.depth = 1;
     image_create_info.mipLevels = 1;
     image_create_info.arrayLayers = 1;
@@ -118,29 +110,13 @@ void Acvv::create_texture_image()
     image_create_info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
     image_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     image_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
-    if (vkCreateImage(device_layer_, &image_create_info, nullptr, &texture_image_) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Do not create image\n");
-    }
-
-    VkMemoryRequirements mem_requiredmemts{};
-    vkGetImageMemoryRequirements(device_layer_, texture_image_, &mem_requiredmemts);
-
-    VkMemoryAllocateInfo allocate_info{};
-    allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocate_info.allocationSize = mem_requiredmemts.size;
-    allocate_info.memoryTypeIndex =
-        find_memory_type(mem_requiredmemts.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-    if (vkAllocateMemory(device_layer_, &allocate_info, nullptr, &texture_image_memory_) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Do not allocate textur ememory\n");
-    }
-    vkBindImageMemory(device_layer_, texture_image_, texture_image_memory_, 0);
+    VmaAllocationCreateInfo image_alloc_info{};
+    staging_alloc_info.usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
+    vmaCreateImage(device_layer_, &image_create_info, &image_alloc_info, &texture_image_, &texture_image_, nullptr);
 
     transition_image_layout(texture_image_, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    copy_buffer_to_image(staging_buffer, texture_image_, castt(uint32_t, width), castt(uint32_t, height));
+    copy_buffer_to_image(staging_buffer, texture_image_, castt(uint32_t, image_pixels.width), castt(uint32_t, image_pixels.height));
     transition_image_layout(texture_image_, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     vmaDestroyBuffer(device_layer_, staging_buffer, staging_buffer);
@@ -159,7 +135,7 @@ void Acvv::create_texture_imageview()
     view_info.subresourceRange.baseArrayLayer = 0;
     view_info.subresourceRange.layerCount = 1;
 
-    if (vkCreateImageView(device_layer_, &view_info, nullptr, &texture_imageview_) != VK_SUCCESS)
+    if (vkCreateImageView(device_layer_, &view_info, nullptr, &texture_image_) != VK_SUCCESS)
     {
         throw std::runtime_error("Error: do not create image view");
     }

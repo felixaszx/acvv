@@ -80,7 +80,7 @@ void Acvv::create_descriptor_pool()
 
         VkDescriptorImageInfo image_info{};
         image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        image_info.imageView = texture_imageview_;
+        image_info.imageView = texture_image_;
         image_info.sampler = textue_sampler_;
 
         std::vector<VkWriteDescriptorSet> descriptor_writes{};

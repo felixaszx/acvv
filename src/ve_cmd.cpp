@@ -8,10 +8,21 @@ void VeSingleTimeCmdBase::begin(VeDeviceLayer& device_layer)
     pool_info.queueFamilyIndex = device_layer.queue_family_indices.graphics;
     vkCreateCommandPool(device_layer, &pool_info, nullptr, this->ptr());
 
+    begin(device_layer, *this);
+}
+
+void VeSingleTimeCmdBase::end(VeDeviceLayer& device_layer)
+{
+    end(device_layer, *this);
+    vkDestroyCommandPool(device_layer, *this, nullptr);
+}
+
+void VeSingleTimeCmdBase::begin(VeDeviceLayer& device_layer, VkCommandPool pool)
+{
     VkCommandBufferAllocateInfo alloc_info{};
     alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    alloc_info.commandPool = *this;
+    alloc_info.commandPool = pool;
     alloc_info.commandBufferCount = 1;
     vkAllocateCommandBuffers(device_layer, &alloc_info, this->ptr());
 
@@ -21,7 +32,7 @@ void VeSingleTimeCmdBase::begin(VeDeviceLayer& device_layer)
     vkBeginCommandBuffer(*this, &begin_info);
 }
 
-void VeSingleTimeCmdBase::end(VeDeviceLayer& device_layer)
+void VeSingleTimeCmdBase::end(VeDeviceLayer& device_layer, VkCommandPool pool)
 {
     vkEndCommandBuffer(*this);
 
@@ -33,6 +44,5 @@ void VeSingleTimeCmdBase::end(VeDeviceLayer& device_layer)
     vkQueueSubmit(device_layer.graphics_queue_, 1, &submit_info, VK_NULL_HANDLE);
     vkQueueWaitIdle(device_layer.graphics_queue_);
 
-    vkFreeCommandBuffers(device_layer, *this, 1, this->ptr());
-    vkDestroyCommandPool(device_layer, *this, nullptr);
+    vkFreeCommandBuffers(device_layer, pool, 1, this->ptr());
 }

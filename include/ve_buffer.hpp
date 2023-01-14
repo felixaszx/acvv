@@ -6,6 +6,7 @@
 
 using VeBufferBase = MultiType<VkBuffer, VkDeviceMemory, VmaAllocation>;
 
-void ve_buffer_cpy(VeDeviceLayer& device_layer, VkBuffer dst, VkBufferCopy region, VkBuffer src);
+void ve_buffer_cpy(VeDeviceLayer& device_layer, VkBuffer dst, VkBuffer src, VkBufferCopy region);
+void ve_buffer_cpy(VeDeviceLayer& device_layer, VkCommandPool pool, VkBuffer dst, VkBuffer src, VkBufferCopy region);
 
 #endif // VE_BUFFER_HPP

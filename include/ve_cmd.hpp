@@ -12,6 +12,9 @@ class VeSingleTimeCmdBase : public MultiType<VkCommandPool, VkCommandBuffer>
   public:
     void begin(VeDeviceLayer& device_layer);
     void end(VeDeviceLayer& device_layer);
+
+    void begin(VeDeviceLayer& device_layer, VkCommandPool pool);
+    void end(VeDeviceLayer& device_layer, VkCommandPool pool);
 };
 
 #endif // VK_CMD_HPP

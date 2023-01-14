@@ -6,6 +6,7 @@
 #include "ve_swapchain.hpp"
 #include "ve_cmd.hpp"
 #include "ve_buffer.hpp"
+#include "ve_image.hpp"
 
 #include "vkm.hpp"
 
@@ -46,9 +47,7 @@ class Acvv
     std::vector<VkSemaphore> image_render_semaphores_{};
     std::vector<VkFence> frame_fence_{};
 
-    VkImage texture_image_ = VK_NULL_HANDLE;
-    VkDeviceMemory texture_image_memory_ = VK_NULL_HANDLE;
-    VkImageView texture_imageview_ = VK_NULL_HANDLE;
+    VeImageBase texture_image_;
     VkSampler textue_sampler_ = VK_NULL_HANDLE;
 
   public:
@@ -80,9 +79,6 @@ class Acvv
     void record_command(VkCommandBuffer command_buffer, uint32_t image_index);
     void update_ubo(uint32_t current_image);
     void draw_frame();
-
-    uint32_t find_memory_type(uint32_t type, VkMemoryPropertyFlags properties);
-    void copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size);
 
     void transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
     void copy_buffer_to_image(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);

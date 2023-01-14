@@ -78,9 +78,8 @@ void Acvv::cleanup()
     swapchain_.destroy(device_layer_);
 
     vkDestroySampler(device_layer_, textue_sampler_, nullptr);
-    vkDestroyImageView(device_layer_, texture_imageview_, nullptr);
-    vkDestroyImage(device_layer_, texture_image_, nullptr);
-    vkFreeMemory(device_layer_, texture_image_memory_, nullptr);
+    vkDestroyImageView(device_layer_, texture_image_, nullptr);
+    vmaDestroyImage(device_layer_, texture_image_, texture_image_);
 
     vkDestroyDescriptorPool(device_layer_, descriptor_pool_, nullptr);
     vkDestroyDescriptorSetLayout(device_layer_, descriptor_set_layout_, nullptr);
@@ -107,32 +106,4 @@ void Acvv::cleanup()
 
     device_layer_.destroy();
     base_layer_.destroy();
-}
-
-uint32_t Acvv::find_memory_type(uint32_t type, VkMemoryPropertyFlags properties)
-{
-    VkPhysicalDeviceMemoryProperties mem_prop{};
-    vkGetPhysicalDeviceMemoryProperties(device_layer_, &mem_prop);
-
-    for (uint32_t i = 0; i < mem_prop.memoryTypeCount; i++)
-    {
-        if ((type & (1 << i)) && (mem_prop.memoryTypes[i].propertyFlags & properties) == properties)
-        {
-            return i;
-        }
-    }
-
-    throw std::runtime_error("failed to find suitable memory type\n");
-}
-
-void Acvv::copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size)
-{
-    VeSingleTimeCmdBase cmd;
-    cmd.begin(device_layer_);
-
-    VkBufferCopy copy_region{};
-    copy_region.size = size;
-    vkCmdCopyBuffer(cmd, src_buffer, dst_buffer, 1, &copy_region);
-
-    cmd.end(device_layer_);
 }

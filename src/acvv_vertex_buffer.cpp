@@ -30,7 +30,7 @@ void Acvv::create_index_buffer()
     alloc_info.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
     vmaCreateBuffer(device_layer_, &buffer_info, &alloc_info, &index_buffer_, &index_buffer_, nullptr);
 
-    copy_buffer(staging_buffer, index_buffer_, size);
+    ve_buffer_cpy(device_layer_, command_pool_, index_buffer_, staging_buffer, {0, 0, size});
 
     vmaDestroyBuffer(device_layer_, staging_buffer, staging_buffer);
 }
@@ -65,7 +65,7 @@ void Acvv::create_vertex_buffer()
     alloc_info.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
     vmaCreateBuffer(device_layer_, &buffer_info, &alloc_info, &vertex_buffer_, &vertex_buffer_, nullptr);
 
-    copy_buffer(staging_buffer, vertex_buffer_, size);
+    ve_buffer_cpy(device_layer_, command_pool_, vertex_buffer_, staging_buffer, {0, 0, size});
 
     vmaDestroyBuffer(device_layer_, staging_buffer, staging_buffer);
 }

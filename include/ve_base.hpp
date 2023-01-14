@@ -14,7 +14,6 @@
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 #include <fmt/core.h>
-#include <stb/stb_image.h>
 
 #include "defines.hpp"
 #include "vma.hpp"
