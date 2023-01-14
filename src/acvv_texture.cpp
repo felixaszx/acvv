@@ -85,17 +85,22 @@ void Acvv::create_texture_image()
     }
     VkDeviceSize size = width * height * 4;
 
-    VkBuffer stagine_buffer = VK_NULL_HANDLE;
-    VkDeviceMemory staging_memory = VK_NULL_HANDLE;
+    VeBufferBase staging_buffer;
+    VkBufferCreateInfo staging_buffer_info{};
+    staging_buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    staging_buffer_info.size = size;
+    staging_buffer_info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    staging_buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    VmaAllocationCreateInfo staging_alloc_info{};
+    staging_alloc_info.usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
+    staging_alloc_info.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+    vmaCreateBuffer(device_layer_, &staging_buffer_info, &staging_alloc_info, &staging_buffer, &staging_buffer,
+                    nullptr);
 
-    create_buffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,                                     //
-                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, //
-                  stagine_buffer, staging_memory);
-
-    void* data;
-    vkMapMemory(device_layer_, staging_memory, 0, size, 0, &data);
-    memcpy(data, pixel, castt(size_t, size));
-    vkUnmapMemory(device_layer_, staging_memory);
+    void* data = nullptr;
+    vmaMapMemory(device_layer_, staging_buffer, &data);
+    memcpy(data, pixel, size);
+    vmaUnmapMemory(device_layer_, staging_buffer);
 
     stbi_image_free(pixel);
 
@@ -135,12 +140,10 @@ void Acvv::create_texture_image()
 
     transition_image_layout(texture_image_, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    copy_buffer_to_image(stagine_buffer, texture_image_, castt(uint32_t, width), castt(uint32_t, height));
+    copy_buffer_to_image(staging_buffer, texture_image_, castt(uint32_t, width), castt(uint32_t, height));
     transition_image_layout(texture_image_, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-    vkDestroyBuffer(device_layer_, stagine_buffer, nullptr);
-    vkFreeMemory(device_layer_, staging_memory, nullptr);
+    vmaDestroyBuffer(device_layer_, staging_buffer, staging_buffer);
 }
 
 void Acvv::create_texture_imageview()

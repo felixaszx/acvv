@@ -85,17 +85,14 @@ void Acvv::cleanup()
     vkDestroyDescriptorPool(device_layer_, descriptor_pool_, nullptr);
     vkDestroyDescriptorSetLayout(device_layer_, descriptor_set_layout_, nullptr);
 
-    vkDestroyBuffer(device_layer_, vertex_buffer_, nullptr);
-    vkFreeMemory(device_layer_, vertex_buffer_memory_, nullptr);
-
-    vkDestroyBuffer(device_layer_, index_buffer_, nullptr);
-    vkFreeMemory(device_layer_, index_buffer_memory_, nullptr);
+    vmaDestroyBuffer(device_layer_, vertex_buffer_, vertex_buffer_);
+    vmaDestroyBuffer(device_layer_, index_buffer_, index_buffer_);
 
     vkDestroyPipeline(device_layer_, graphics_pipeline_, nullptr);
     for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        vkDestroyBuffer(device_layer_, uniform_buffers_[i], nullptr);
-        vkFreeMemory(device_layer_, uniform_buffers_memory_[i], nullptr);
+        vmaUnmapMemory(device_layer_, uniform_buffers_[i]);
+        vmaDestroyBuffer(device_layer_, uniform_buffers_[i], uniform_buffers_[i]);
     }
     vkDestroyPipelineLayout(device_layer_, pipeline_Layout_, nullptr);
     vkDestroyRenderPass(device_layer_, render_pass_, nullptr);
@@ -138,27 +135,4 @@ void Acvv::copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize si
     vkCmdCopyBuffer(cmd, src_buffer, dst_buffer, 1, &copy_region);
 
     cmd.end(device_layer_);
-}
-
-void Acvv::create_buffer(VkDeviceSize size,                                          //
-                         VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, //
-                         VkBuffer& buffer, VkDeviceMemory& buffer_memory)
-{
-    VkBufferCreateInfo buffer_info{};
-    buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    buffer_info.size = size;
-    buffer_info.usage = usage;
-    buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    vkCreateBuffer(device_layer_, &buffer_info, nullptr, &buffer);
-
-    VkMemoryRequirements mem_requires{};
-    vkGetBufferMemoryRequirements(device_layer_, buffer, &mem_requires);
-
-    VkMemoryAllocateInfo alloc_info{};
-    alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    alloc_info.allocationSize = mem_requires.size;
-    alloc_info.memoryTypeIndex = find_memory_type(mem_requires.memoryTypeBits, properties);
-
-    vkAllocateMemory(device_layer_, &alloc_info, nullptr, &buffer_memory);
-    vkBindBufferMemory(device_layer_, buffer, buffer_memory, 0);
 }

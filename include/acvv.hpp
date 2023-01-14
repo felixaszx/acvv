@@ -5,6 +5,7 @@
 #include "ve_device.hpp"
 #include "ve_swapchain.hpp"
 #include "ve_cmd.hpp"
+#include "ve_buffer.hpp"
 
 #include "vkm.hpp"
 
@@ -30,17 +31,14 @@ class Acvv
     VkCommandPool command_pool_ = VK_NULL_HANDLE;
     std::vector<VkCommandBuffer> command_buffers_{};
 
-    VkBuffer vertex_buffer_ = VK_NULL_HANDLE;
-    VkDeviceMemory vertex_buffer_memory_ = VK_NULL_HANDLE;
-    VkBuffer index_buffer_ = VK_NULL_HANDLE;
-    VkDeviceMemory index_buffer_memory_ = VK_NULL_HANDLE;
+    VeBufferBase vertex_buffer_;
+    VeBufferBase index_buffer_;
 
     VkDescriptorPool descriptor_pool_ = VK_NULL_HANDLE;
     VkDescriptorSetLayout descriptor_set_layout_ = VK_NULL_HANDLE;
     std::vector<VkDescriptorSet> descriptor_set_{};
 
-    std::vector<VkBuffer> uniform_buffers_{};
-    std::vector<VkDeviceMemory> uniform_buffers_memory_{};
+    std::vector<VeBufferBase> uniform_buffers_{};
     std::vector<void*> uniform_buffers_map_{};
 
     uint32_t current_frame_ = 0;
@@ -84,9 +82,6 @@ class Acvv
     void draw_frame();
 
     uint32_t find_memory_type(uint32_t type, VkMemoryPropertyFlags properties);
-    void create_buffer(VkDeviceSize size,                                          //
-                       VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, //
-                       VkBuffer& buffer, VkDeviceMemory& buffer_memory);
     void copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size);
 
     void transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);

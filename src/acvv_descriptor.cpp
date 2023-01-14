@@ -29,16 +29,21 @@ void Acvv::create_uniform_buffer()
     VkDeviceSize size = sizeof(UniformBufferObject);
 
     uniform_buffers_.resize(MAX_FRAMES_IN_FLIGHT);
-    uniform_buffers_memory_.resize(MAX_FRAMES_IN_FLIGHT);
     uniform_buffers_map_.resize(MAX_FRAMES_IN_FLIGHT);
 
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        create_buffer(size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, //
-                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniform_buffers_[i],
-                      uniform_buffers_memory_[i]);
+        VkBufferCreateInfo buffer_info{};
+        buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        buffer_info.size = size;
+        buffer_info.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+        buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        VmaAllocationCreateInfo alloc_info{};
+        alloc_info.usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
+        alloc_info.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+        vmaCreateBuffer(device_layer_, &buffer_info, &alloc_info, &uniform_buffers_[i], &uniform_buffers_[i], nullptr);
 
-        vkMapMemory(device_layer_, uniform_buffers_memory_[i], 0, size, 0, &uniform_buffers_map_[i]);
+        vmaMapMemory(device_layer_, uniform_buffers_[i], &uniform_buffers_map_[i]);
     }
 }
 
