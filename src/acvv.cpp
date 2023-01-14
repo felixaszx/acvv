@@ -130,47 +130,14 @@ uint32_t Acvv::find_memory_type(uint32_t type, VkMemoryPropertyFlags properties)
 
 void Acvv::copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size)
 {
-    VkCommandBuffer copy_command_buffer = begin_single_commandbuffer();
+    VeSingleTimeCmdBase cmd;
+    cmd.begin(device_layer_);
 
     VkBufferCopy copy_region{};
     copy_region.size = size;
-    vkCmdCopyBuffer(copy_command_buffer, src_buffer, dst_buffer, 1, &copy_region);
+    vkCmdCopyBuffer(cmd, src_buffer, dst_buffer, 1, &copy_region);
 
-    end_single_commandbuffer(copy_command_buffer);
-}
-
-VkCommandBuffer Acvv::begin_single_commandbuffer()
-{
-    VkCommandBufferAllocateInfo alloc_info{};
-    alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    alloc_info.commandPool = command_pool_;
-    alloc_info.commandBufferCount = 1;
-
-    VkCommandBuffer commandbuffer;
-    vkAllocateCommandBuffers(device_layer_, &alloc_info, &commandbuffer);
-
-    VkCommandBufferBeginInfo begin_info{};
-    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-    vkBeginCommandBuffer(commandbuffer, &begin_info);
-    return commandbuffer;
-}
-
-void Acvv::end_single_commandbuffer(VkCommandBuffer commandbuffer)
-{
-    vkEndCommandBuffer(commandbuffer);
-
-    VkSubmitInfo submit_info{};
-    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &commandbuffer;
-
-    vkQueueSubmit(device_layer_.graphics_queue_, 1, &submit_info, VK_NULL_HANDLE);
-    vkQueueWaitIdle(device_layer_.graphics_queue_);
-
-    vkFreeCommandBuffers(device_layer_, command_pool_, 1, &commandbuffer);
+    cmd.end(device_layer_);
 }
 
 void Acvv::create_buffer(VkDeviceSize size,                                          //

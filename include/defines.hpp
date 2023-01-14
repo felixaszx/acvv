@@ -28,18 +28,18 @@ class MultiType : std::tuple<T...>
         template <typename Q>
         operator Q()
         {
-            return &std::get<std::remove_pointer_t<Q>>(*target_);
+            return &std::get<std::remove_cv_t<std::remove_pointer_t<Q>>>(*target_);
         }
     };
 
   public:
     template <typename Q>
-    Q to()
+    Q data()
     {
         return std::get<Q>(*this);
     }
 
-    template <typename Q>
+    template <typename Q> const
     Q* ptr()
     {
         return &std::get<Q>(*this);

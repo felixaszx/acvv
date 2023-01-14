@@ -2,7 +2,8 @@
 
 void Acvv::transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout)
 {
-    VkCommandBuffer icommandbuffer = begin_single_commandbuffer();
+    VeSingleTimeCmdBase cmd;
+    cmd.begin(device_layer_);
 
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -44,14 +45,15 @@ void Acvv::transition_image_layout(VkImage image, VkFormat format, VkImageLayout
         throw std::invalid_argument("unsupported layout transition!");
     }
 
-    vkCmdPipelineBarrier(icommandbuffer, src_stage, dst_stage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+    vkCmdPipelineBarrier(cmd, src_stage, dst_stage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
-    end_single_commandbuffer(icommandbuffer);
+    cmd.end(device_layer_);
 }
 
 void Acvv::copy_buffer_to_image(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 {
-    VkCommandBuffer icommandbuffer = begin_single_commandbuffer();
+    VeSingleTimeCmdBase cmd;
+    cmd.begin(device_layer_);
 
     VkBufferImageCopy region{};
     region.bufferOffset = 0;
@@ -66,8 +68,9 @@ void Acvv::copy_buffer_to_image(VkBuffer buffer, VkImage image, uint32_t width, 
     region.imageOffset = {0, 0, 0};
     region.imageExtent = {width, height, 1};
 
-    vkCmdCopyBufferToImage(icommandbuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-    end_single_commandbuffer(icommandbuffer);
+    vkCmdCopyBufferToImage(cmd, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+    cmd.end(device_layer_);
 }
 
 void Acvv::create_texture_image()

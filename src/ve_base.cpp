@@ -64,7 +64,7 @@ void VeBaseLayer::create(const std::string& name)
     if (ENABLE_VALIDATION_LAYERS)
     {
         auto load_func = load_ext_function<PFN_vkCreateDebugUtilsMessengerEXT>(
-            vkGetInstanceProcAddr, this->to<VkInstance>(), "vkCreateDebugUtilsMessengerEXT");
+            vkGetInstanceProcAddr, this->data<VkInstance>(), "vkCreateDebugUtilsMessengerEXT");
         if (load_func(*this, &debug_utils_creat_info, nullptr, this->ptr()) != VK_SUCCESS)
         {
 
@@ -81,7 +81,7 @@ void VeBaseLayer::create(const std::string& name)
 void VeBaseLayer::destroy()
 {
     auto load_func = load_ext_function<PFN_vkDestroyDebugUtilsMessengerEXT>(
-        vkGetInstanceProcAddr, this->to<VkInstance>(), "vkDestroyDebugUtilsMessengerEXT");
+        vkGetInstanceProcAddr, this->data<VkInstance>(), "vkDestroyDebugUtilsMessengerEXT");
     load_func(*this, *this, nullptr);
     vkDestroySurfaceKHR(*this, *this, nullptr);
     vkDestroyInstance(*this, nullptr);

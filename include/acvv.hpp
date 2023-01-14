@@ -4,6 +4,7 @@
 #include "ve_base.hpp"
 #include "ve_device.hpp"
 #include "ve_swapchain.hpp"
+#include "ve_cmd.hpp"
 
 #include "vkm.hpp"
 
@@ -87,9 +88,6 @@ class Acvv
                        VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, //
                        VkBuffer& buffer, VkDeviceMemory& buffer_memory);
     void copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size);
-
-    VkCommandBuffer begin_single_commandbuffer();
-    void end_single_commandbuffer(VkCommandBuffer commandbuffer);
 
     void transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
     void copy_buffer_to_image(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
