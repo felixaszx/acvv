@@ -6,12 +6,12 @@ void Acvv::create_framebuffers()
 
     for (uint32_t i = 0; i < swapchain_framebuffers_.size(); i++)
     {
-        VkImageView attacgments[] = {swapchain_.image_views_[i]};
+        VkImageView attacgments[] = {swapchain_.image_views_[i], depth_image_};
 
         VkFramebufferCreateInfo create_info{};
         create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         create_info.renderPass = render_pass_;
-        create_info.attachmentCount = 1;
+        create_info.attachmentCount = 2;
         create_info.pAttachments = attacgments;
         create_info.width = swapchain_.extend_.width;
         create_info.height = swapchain_.extend_.height;

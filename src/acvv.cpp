@@ -30,6 +30,7 @@ void Acvv::init_window()
 
                                        app->swapchain_.create(app->base_layer_, app->base_layer_, app->device_layer_);
                                        app->swapchain_.create_image_view(app->device_layer_);
+                                       app->create_depth_image();
                                        app->create_framebuffers();
                                    });
 }
@@ -45,9 +46,10 @@ void Acvv::init_vulkan()
     create_graphics_pipeline();
 
     create_sync_objs();
-    create_framebuffers();
-
     create_command_buffer();
+
+    create_depth_image();
+    create_framebuffers();
 
     create_texture_image();
     create_texture_imageview();
@@ -71,6 +73,8 @@ void Acvv::main_loop()
 
 void Acvv::cleanup()
 {
+    vkDestroyImageView(device_layer_, depth_image_, nullptr);
+    vmaDestroyImage(device_layer_, depth_image_, depth_image_);
     for (auto framebuffer : swapchain_framebuffers_)
     {
         vkDestroyFramebuffer(device_layer_, framebuffer, nullptr);

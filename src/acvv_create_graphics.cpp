@@ -87,6 +87,14 @@ void Acvv::create_graphics_pipeline()
     pipeline_layout_info.pSetLayouts = &descriptor_set_layout_;
     vkCreatePipelineLayout(device_layer_, &pipeline_layout_info, nullptr, &pipeline_Layout_);
 
+    VkPipelineDepthStencilStateCreateInfo depth_sentcil{};
+    depth_sentcil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depth_sentcil.depthTestEnable = VK_TRUE;
+    depth_sentcil.depthWriteEnable = VK_TRUE;
+    depth_sentcil.depthCompareOp = VK_COMPARE_OP_LESS;
+    depth_sentcil.depthBoundsTestEnable = VK_FALSE;
+    depth_sentcil.stencilTestEnable = VK_FALSE;
+
     VkGraphicsPipelineCreateInfo pipeline_info{};
     pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipeline_info.stageCount = 2;
@@ -98,6 +106,7 @@ void Acvv::create_graphics_pipeline()
     pipeline_info.pMultisampleState = &multisample;
     pipeline_info.pColorBlendState = &color_blending;
     pipeline_info.pDynamicState = &dynamic_state;
+    pipeline_info.pDepthStencilState = &depth_sentcil;
     pipeline_info.layout = pipeline_Layout_;
     pipeline_info.renderPass = render_pass_;
     pipeline_info.subpass = 0;

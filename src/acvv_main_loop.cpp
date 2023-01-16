@@ -6,14 +6,16 @@ void Acvv::record_command(VkCommandBuffer command_buffer, uint32_t image_index)
     begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     vkBeginCommandBuffer(command_buffer, &begin_info);
 
-    VkClearValue clear_color({0.0f, 0.0f, 0.0f, 1.0f});
+    VkClearValue clear_value[2];
+    clear_value[0] = {{0.0f, 0.0f, 0.0f, 1.0f}};
+    clear_value[1] = {{1.0f, 0.0f}};
     VkRenderPassBeginInfo render_pass_info{};
     render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     render_pass_info.renderPass = render_pass_;
     render_pass_info.framebuffer = swapchain_framebuffers_[image_index];
     render_pass_info.renderArea.extent = swapchain_.extend_;
-    render_pass_info.clearValueCount = 1;
-    render_pass_info.pClearValues = &clear_color;
+    render_pass_info.clearValueCount = 2;
+    render_pass_info.pClearValues = clear_value;
     vkCmdBeginRenderPass(command_buffer, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 
     vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline_);

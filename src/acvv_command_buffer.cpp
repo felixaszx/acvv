@@ -36,3 +36,38 @@ void Acvv::create_command_buffer()
     alloc_info.commandBufferCount = castt(uint32_t, command_buffers_.size());
     vkAllocateCommandBuffers(device_layer_, &alloc_info, command_buffers_.data());
 }
+
+void Acvv::create_depth_image()
+{
+    VkImageCreateInfo depth_create_info{};
+    depth_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    depth_create_info.imageType = VK_IMAGE_TYPE_2D;
+    depth_create_info.extent.width = casts(uint32_t, swapchain_.extend_.width);
+    depth_create_info.extent.height = casts(uint32_t, swapchain_.extend_.height);
+    depth_create_info.extent.depth = 1;
+    depth_create_info.mipLevels = 1;
+    depth_create_info.arrayLayers = 1;
+    depth_create_info.format = VK_FORMAT_D32_SFLOAT_S8_UINT;
+    depth_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    depth_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    depth_create_info.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    depth_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    depth_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
+    VmaAllocationCreateInfo depth_alloc_info{};
+    depth_alloc_info.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+    vmaCreateImage(device_layer_, &depth_create_info, &depth_alloc_info, &depth_image_, &depth_image_, nullptr);
+    VkImageViewCreateInfo depth_view_info{};
+    depth_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    depth_view_info.image = depth_image_;
+    depth_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    depth_view_info.format = VK_FORMAT_D32_SFLOAT_S8_UINT;
+    depth_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+    depth_view_info.subresourceRange.baseMipLevel = 0;
+    depth_view_info.subresourceRange.levelCount = 1;
+    depth_view_info.subresourceRange.baseArrayLayer = 0;
+    depth_view_info.subresourceRange.layerCount = 1;
+    vkCreateImageView(device_layer_, &depth_view_info, nullptr, &depth_image_);
+
+    transition_image_layout(depth_image_, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_LAYOUT_UNDEFINED,
+                            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+}

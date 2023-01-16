@@ -40,6 +40,17 @@ void Acvv::transition_image_layout(VkImage image, VkFormat format, VkImageLayout
         src_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
         dst_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
     }
+    else if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED && //
+             new_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+    {
+        barrier.srcAccessMask = 0;
+        barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | //
+                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+        src_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        dst_stage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    }
     else
     {
         throw std::invalid_argument("unsupported layout transition!");
@@ -116,7 +127,8 @@ void Acvv::create_texture_image()
 
     transition_image_layout(texture_image_, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    copy_buffer_to_image(staging_buffer, texture_image_, castt(uint32_t, image_pixels.width), castt(uint32_t, image_pixels.height));
+    copy_buffer_to_image(staging_buffer, texture_image_, castt(uint32_t, image_pixels.width),
+                         castt(uint32_t, image_pixels.height));
     transition_image_layout(texture_image_, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     vmaDestroyBuffer(device_layer_, staging_buffer, staging_buffer);
