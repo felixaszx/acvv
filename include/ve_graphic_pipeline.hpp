@@ -14,7 +14,7 @@ struct VeShaderBase : public VeShaderModuleStage
     void destroy(VkDevice device);
 };
 
-std::vector<VeImageBase> creat_attachments(VeDeviceLayer device_layer, const std::vector<VkFormat>& formats, //
+std::vector<VeImageBase> creat_image_attachments(VeDeviceLayer device_layer, const std::vector<VkFormat>& formats, //
                                                  const std::vector<VkExtent2D>& extends,                           //
                                                  const std::vector<VkSampleCountFlagBits>& samples,                //
                                                  const std::vector<VkImageUsageFlags>& usages,//
