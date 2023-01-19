@@ -33,11 +33,9 @@ int main(int argc, char** argv)
     std::vector<VkImageAspectFlags> aspects = {VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_ASPECT_COLOR_BIT,
                                                VK_IMAGE_ASPECT_COLOR_BIT,
                                                VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT};
-    std::vector<VeImageBase> attachments = creat_attachments(device_layer, //
-                                                             formats,      //
-                                                             extends,      //
-                                                             samples,      //
-                                                             usages,       //
+    std::vector<VeImageBase> attachments = creat_attachments(device_layer,     //
+                                                             formats, extends, //
+                                                             samples, usages,  //
                                                              aspects);
 
     std::vector<VkAttachmentDescription> attachment_descriptions;
@@ -91,11 +89,19 @@ int main(int argc, char** argv)
     subpasses[1].pColorAttachments = attachment_ref.data();
     subpasses[1].pDepthStencilAttachment = &attachment_ref[3];
 
+    std::vector<VkAttachmentReference> attachment_ref2;
+    attachment_ref2.resize(3);
+    for (int i = 0; i < 3; i++)
+    {
+        attachment_ref2[i].attachment = i;
+        attachment_ref2[i].layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    }
+
     subpasses[2].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     subpasses[2].colorAttachmentCount = 1;
     subpasses[2].pColorAttachments = &attachment_ref[4];
     subpasses[2].inputAttachmentCount = 3;
-    subpasses[2].pInputAttachments = attachment_ref.data();
+    subpasses[2].pInputAttachments = attachment_ref2.data();
 
     std::vector<VkSubpassDependency> dependencies;
     dependencies.resize(2);
