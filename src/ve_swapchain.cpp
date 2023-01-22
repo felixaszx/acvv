@@ -102,10 +102,14 @@ void VeSwapchainBase::destroy(VkDevice device)
 {
     vkDeviceWaitIdle(device);
 
-    for (VkImageView& image_view : image_views_)
+    if (!image_views_.empty())
     {
-        vkDestroyImageView(device, image_view, nullptr);
+        for (VkImageView& image_view : image_views_)
+        {
+            vkDestroyImageView(device, image_view, nullptr);
+        }
     }
+
     vkDestroySwapchainKHR(device, swapchain_, nullptr);
 }
 
