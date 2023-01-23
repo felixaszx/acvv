@@ -11,6 +11,13 @@
 
 #include "glms.hpp"
 
+struct UniformBuffer
+{
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
+
 int main(int argc, char** argv)
 {
     VeBaseLayer base_layer(1920, 1080);
