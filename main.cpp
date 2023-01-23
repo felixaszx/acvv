@@ -133,11 +133,81 @@ int main(int argc, char** argv)
     VkRenderPass render_pass;
     vkCreateRenderPass(device_layer, &render_pass_info, nullptr, &render_pass);
 
-    VkPipelineLayout pipeline_layouts[3]{};
+    UniformBuffer ubo{};
+    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.proj = glm::perspective(glm::radians(45.0f),                                       //
+                                swapchain.extend_.width / (float)swapchain.extend_.height, //
+                                0.1f, 10.0f);
+    ubo.proj[1][1] *= -1;
+    ubo.model = glm::mat4(1.0f);
+
+    void* ubo_map = nullptr;
+    VeBufferBase uniform_buffer;
+    VkBufferCreateInfo ubo_info{};
+    ubo_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    ubo_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    ubo_info.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    ubo_info.size = sizeof(ubo);
+    VmaAllocationCreateInfo ubo_alloc_info{};
+    ubo_alloc_info.usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
+    ubo_alloc_info.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+    vmaCreateBuffer(device_layer, &ubo_info, &ubo_alloc_info, &uniform_buffer, &uniform_buffer, nullptr);
+    vmaMapMemory(device_layer, uniform_buffer, &ubo_map);
+    memcpy(ubo_map, &ubo, sizeof(ubo));
+
+    VkDescriptorSetLayout set_layouts[2]{};
+    VkDescriptorSet descriptor_sets[2]{};
+    VkDescriptorPool descriptor_pools[2]{};
+
+    VkPipelineLayout pipeline_layouts[2]{};
     VkPipeline graphics_pipelines[3]{};
 
     auto pipeline0 = [&]()
     {
+        // descriptor
+        VkDescriptorSetLayoutBinding binding{};
+        binding.binding = 0;
+        binding.descriptorCount = 1;
+        binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+        VkDescriptorSetLayoutCreateInfo set_layout_create_info{};
+        set_layout_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        set_layout_create_info.bindingCount = 1;
+        set_layout_create_info.pBindings = &binding;
+        vkCreateDescriptorSetLayout(device_layer, &set_layout_create_info, nullptr, set_layouts + 0);
+
+        VkDescriptorPoolSize pool_size;
+        pool_size.descriptorCount = 1;
+        pool_size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        VkDescriptorPoolCreateInfo pool_create_info{};
+        pool_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        pool_create_info.pPoolSizes = &pool_size;
+        pool_create_info.poolSizeCount = 1;
+        pool_create_info.maxSets = 1;
+        vkCreateDescriptorPool(device_layer, &pool_create_info, nullptr, descriptor_pools + 0);
+
+        VkDescriptorSetAllocateInfo set_alloc_info{};
+        set_alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        set_alloc_info.descriptorPool = descriptor_pools[0];
+        set_alloc_info.descriptorSetCount = 1;
+        set_alloc_info.pSetLayouts = set_layouts + 0;
+        vkAllocateDescriptorSets(device_layer, &set_alloc_info, descriptor_sets + 0);
+
+        VkDescriptorBufferInfo buffer_info{};
+        buffer_info.buffer = uniform_buffer;
+        buffer_info.offset = 0;
+        buffer_info.range = VK_WHOLE_SIZE;
+        VkWriteDescriptorSet write{};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet = descriptor_sets[0];
+        write.dstBinding = 0;
+        write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        write.descriptorCount = 1;
+        write.pBufferInfo = &buffer_info;
+        vkUpdateDescriptorSets(device_layer, 1, &write, 0, nullptr);
+
+        // pipeline
         auto vert_shader_code = read_file("res/shader/vert.spv", std::ios::binary);
         VeShaderBase vert_shader;
         vert_shader.create(device_layer, vert_shader_code, "main", VK_SHADER_STAGE_VERTEX_BIT);
@@ -177,6 +247,8 @@ int main(int argc, char** argv)
 
         VkPipelineLayoutCreateInfo pipeline_layout_info{};
         pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipeline_layout_info.setLayoutCount = 1;
+        pipeline_layout_info.pSetLayouts = set_layouts + 0;
         vkCreatePipelineLayout(device_layer, &pipeline_layout_info, nullptr, pipeline_layouts + 0);
 
         VkPipelineDepthStencilStateCreateInfo depth_sentcil{};
@@ -258,10 +330,6 @@ int main(int argc, char** argv)
         color_blending.attachmentCount = 3;
         color_blending.pAttachments = color_blend_attachments;
 
-        VkPipelineLayoutCreateInfo pipeline_layout_info{};
-        pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        vkCreatePipelineLayout(device_layer, &pipeline_layout_info, nullptr, pipeline_layouts + 1);
-
         VkPipelineDepthStencilStateCreateInfo depth_sentcil{};
         depth_sentcil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
         depth_sentcil.depthTestEnable = VK_TRUE;
@@ -282,7 +350,7 @@ int main(int argc, char** argv)
         pipeline1_info.pColorBlendState = &color_blending;
         pipeline1_info.pDynamicState = &dynamic_state;
         pipeline1_info.pDepthStencilState = &depth_sentcil;
-        pipeline1_info.layout = pipeline_layouts[1];
+        pipeline1_info.layout = pipeline_layouts[0];
         pipeline1_info.renderPass = render_pass;
         pipeline1_info.subpass = 1;
         vkCreateGraphicsPipelines(device_layer, VK_NULL_HANDLE, 1, &pipeline1_info, nullptr, graphics_pipelines + 1);
@@ -362,7 +430,7 @@ int main(int argc, char** argv)
         pipeline2_info.pColorBlendState = &color_blending;
         pipeline2_info.pDynamicState = &dynamic_state;
         pipeline2_info.pDepthStencilState = &depth_sentcil;
-        pipeline2_info.layout = pipeline_layouts[2];
+        pipeline2_info.layout = pipeline_layouts[1];
         pipeline2_info.renderPass = render_pass;
         pipeline2_info.subpass = 2;
         vkCreateGraphicsPipelines(device_layer, VK_NULL_HANDLE, 1, &pipeline2_info, nullptr, graphics_pipelines + 2);
@@ -384,6 +452,14 @@ int main(int argc, char** argv)
     {
         vkDestroyImageView(device_layer, attachment, nullptr);
         vmaDestroyImage(device_layer, attachment, attachment);
+    }
+
+    vmaUnmapMemory(device_layer, uniform_buffer);
+    vmaDestroyBuffer(device_layer, uniform_buffer, uniform_buffer);
+    for (int i = 0; i < 2; i++)
+    {
+        vkDestroyDescriptorPool(device_layer, descriptor_pools[i], nullptr);
+        vkDestroyDescriptorSetLayout(device_layer, set_layouts[i], nullptr);
     }
 
     for (int i = 0; i < 3; i++)
