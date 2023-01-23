@@ -162,9 +162,8 @@ int main(int argc, char** argv)
     VkPipelineLayout pipeline_layouts[2]{};
     VkPipeline graphics_pipelines[3]{};
 
-    auto pipeline0 = [&]()
+    auto descriptor0 = [&]()
     {
-        // descriptor
         VkDescriptorSetLayoutBinding binding{};
         binding.binding = 0;
         binding.descriptorCount = 1;
@@ -194,19 +193,58 @@ int main(int argc, char** argv)
         set_alloc_info.pSetLayouts = set_layouts + 0;
         vkAllocateDescriptorSets(device_layer, &set_alloc_info, descriptor_sets + 0);
 
-        VkDescriptorBufferInfo buffer_info{};
-        buffer_info.buffer = uniform_buffer;
-        buffer_info.offset = 0;
-        buffer_info.range = VK_WHOLE_SIZE;
-        VkWriteDescriptorSet write{};
-        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.dstSet = descriptor_sets[0];
-        write.dstBinding = 0;
-        write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        write.descriptorCount = 1;
-        write.pBufferInfo = &buffer_info;
-        vkUpdateDescriptorSets(device_layer, 1, &write, 0, nullptr);
+        VkPipelineLayoutCreateInfo pipeline_layout_info{};
+        pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipeline_layout_info.setLayoutCount = 1;
+        pipeline_layout_info.pSetLayouts = set_layouts + 0;
+        vkCreatePipelineLayout(device_layer, &pipeline_layout_info, nullptr, pipeline_layouts + 0);
+    };
+    auto descriptor1 = [&]()
+    {
+        VkDescriptorSetLayoutBinding bindings[3]{};
+        for (int i = 0; i < 3; i++)
+        {
+            bindings[i].binding = i;
+            bindings[i].descriptorCount = 1;
+            bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+            bindings[i].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+        }
 
+        VkDescriptorSetLayoutCreateInfo set_layout_create_info{};
+        set_layout_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        set_layout_create_info.bindingCount = 3;
+        set_layout_create_info.pBindings = bindings;
+        vkCreateDescriptorSetLayout(device_layer, &set_layout_create_info, nullptr, set_layouts + 1);
+
+        VkDescriptorPoolSize pool_size;
+        pool_size.descriptorCount = 3;
+        pool_size.type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+        VkDescriptorPoolCreateInfo pool_create_info{};
+        pool_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        pool_create_info.pPoolSizes = &pool_size;
+        pool_create_info.poolSizeCount = 1;
+        pool_create_info.maxSets = 1;
+        vkCreateDescriptorPool(device_layer, &pool_create_info, nullptr, descriptor_pools + 1);
+
+        VkDescriptorSetAllocateInfo set_alloc_info{};
+        set_alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        set_alloc_info.descriptorPool = descriptor_pools[1];
+        set_alloc_info.descriptorSetCount = 1;
+        set_alloc_info.pSetLayouts = set_layouts + 1;
+        vkAllocateDescriptorSets(device_layer, &set_alloc_info, descriptor_sets + 1);
+        
+        VkPipelineLayoutCreateInfo pipeline_layout_info{};
+        pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipeline_layout_info.setLayoutCount = 1;
+        pipeline_layout_info.pSetLayouts = set_layouts + 1;
+        vkCreatePipelineLayout(device_layer, &pipeline_layout_info, nullptr, pipeline_layouts + 1);
+    };
+
+    descriptor0();
+    descriptor1();
+
+    auto pipeline0 = [&]()
+    {
         // pipeline
         auto vert_shader_code = read_file("res/shader/vert.spv", std::ios::binary);
         VeShaderBase vert_shader;
@@ -244,12 +282,6 @@ int main(int argc, char** argv)
 
         VkPipelineColorBlendStateCreateInfo color_blending{};
         color_blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-
-        VkPipelineLayoutCreateInfo pipeline_layout_info{};
-        pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipeline_layout_info.setLayoutCount = 1;
-        pipeline_layout_info.pSetLayouts = set_layouts + 0;
-        vkCreatePipelineLayout(device_layer, &pipeline_layout_info, nullptr, pipeline_layouts + 0);
 
         VkPipelineDepthStencilStateCreateInfo depth_sentcil{};
         depth_sentcil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -406,10 +438,6 @@ int main(int argc, char** argv)
         color_blending.attachmentCount = 1;
         color_blending.pAttachments = color_blend_attachments;
 
-        VkPipelineLayoutCreateInfo pipeline_layout_info{};
-        pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        vkCreatePipelineLayout(device_layer, &pipeline_layout_info, nullptr, pipeline_layouts + 1);
-
         VkPipelineDepthStencilStateCreateInfo depth_sentcil{};
         depth_sentcil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
         depth_sentcil.depthTestEnable = VK_FALSE;
@@ -442,6 +470,19 @@ int main(int argc, char** argv)
     pipeline0();
     pipeline1();
     pipeline2();
+
+    VkDescriptorBufferInfo buffer_info{};
+    buffer_info.buffer = uniform_buffer;
+    buffer_info.offset = 0;
+    buffer_info.range = VK_WHOLE_SIZE;
+    VkWriteDescriptorSet write{};
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.dstSet = descriptor_sets[0];
+    write.dstBinding = 0;
+    write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    write.descriptorCount = 1;
+    write.pBufferInfo = &buffer_info;
+    vkUpdateDescriptorSets(device_layer, 1, &write, 0, nullptr);
 
     while (!glfwWindowShouldClose(base_layer))
     {
