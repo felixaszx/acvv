@@ -408,7 +408,7 @@ int main(int argc, char** argv)
 
         VkPipelineLayoutCreateInfo pipeline_layout_info{};
         pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        vkCreatePipelineLayout(device_layer, &pipeline_layout_info, nullptr, pipeline_layouts + 2);
+        vkCreatePipelineLayout(device_layer, &pipeline_layout_info, nullptr, pipeline_layouts + 1);
 
         VkPipelineDepthStencilStateCreateInfo depth_sentcil{};
         depth_sentcil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -460,12 +460,12 @@ int main(int argc, char** argv)
     {
         vkDestroyDescriptorPool(device_layer, descriptor_pools[i], nullptr);
         vkDestroyDescriptorSetLayout(device_layer, set_layouts[i], nullptr);
+        vkDestroyPipelineLayout(device_layer, pipeline_layouts[i], nullptr);
     }
 
     for (int i = 0; i < 3; i++)
     {
         vkDestroyPipeline(device_layer, graphics_pipelines[i], nullptr);
-        vkDestroyPipelineLayout(device_layer, pipeline_layouts[i], nullptr);
     }
 
     vkDestroyRenderPass(device_layer, render_pass, nullptr);
