@@ -32,7 +32,7 @@ struct VeBaseLayer : public VeBase
 #ifdef NDEBUG
                 bool debug = false
 #else
-                bool debug = true
+                bool debug = false
 #endif
     );
     ~VeBaseLayer();

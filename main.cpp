@@ -307,6 +307,7 @@ int main(int argc, char** argv)
         pipeline0_info.layout = pipeline_layouts[0];
         pipeline0_info.renderPass = render_pass;
         pipeline0_info.subpass = 0;
+
         vkCreateGraphicsPipelines(device_layer, VK_NULL_HANDLE, 1, &pipeline0_info, nullptr, graphics_pipelines + 0);
 
         vert_shader.destroy(device_layer);
@@ -441,11 +442,6 @@ int main(int argc, char** argv)
 
         VkPipelineDepthStencilStateCreateInfo depth_sentcil{};
         depth_sentcil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-        depth_sentcil.depthTestEnable = VK_FALSE;
-        depth_sentcil.depthWriteEnable = VK_FALSE;
-        depth_sentcil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-        depth_sentcil.depthBoundsTestEnable = VK_FALSE;
-        depth_sentcil.stencilTestEnable = VK_FALSE;
 
         VkGraphicsPipelineCreateInfo pipeline2_info{};
         pipeline2_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -574,8 +570,66 @@ int main(int argc, char** argv)
         render_pass_info.pClearValues = clear_value;
         vkCmdBeginRenderPass(cmd, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipelines[0]);
+        VkViewport viewport{};
+        viewport.width = casts(uint32_t, swapchain.extend_.width);
+        viewport.height = casts(uint32_t, swapchain.extend_.height);
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+        vkCmdSetViewport(cmd, 0, 1, &viewport);
+        VkRect2D scissor{};
+        scissor.extent = swapchain.extend_;
+        vkCmdSetScissor(cmd, 0, 1, &scissor);
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts[0], 0, 1, descriptor_sets, 0,
+                                nullptr);
+        vkCmdDraw(cmd, 12, 1, 0, 0);
+
+        vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipelines[1]);
+        vkCmdSetViewport(cmd, 0, 1, &viewport);
+        vkCmdSetScissor(cmd, 0, 1, &scissor);
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts[0], 0, 1, descriptor_sets, 0,
+                                nullptr);
+        vkCmdDraw(cmd, 12, 1, 0, 0);
+
+        vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipelines[2]);
+        vkCmdSetViewport(cmd, 0, 1, &viewport);
+        vkCmdSetScissor(cmd, 0, 1, &scissor);
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts[1], 0, 1, descriptor_sets + 1, 0,
+                                nullptr);
+        vkCmdDraw(cmd, 6, 1, 0, 0);
+
+        vkCmdEndRenderPass(cmd);
+        vkEndCommandBuffer(cmd);
+
+        VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+        VkSubmitInfo submit_info{};
+        submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submit_info.waitSemaphoreCount = 1;
+        submit_info.pWaitSemaphores = &image_semaphore;
+        submit_info.pWaitDstStageMask = wait_stages;
+        submit_info.commandBufferCount = 1;
+        submit_info.pCommandBuffers = &cmd;
+        submit_info.signalSemaphoreCount = 1;
+        submit_info.pSignalSemaphores = &submit_semaphore;
+        vkQueueSubmit(device_layer.graphics_queue_, 1, &submit_info, frame_fence);
+
+        VkPresentInfoKHR present_info{};
+        present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        present_info.waitSemaphoreCount = 1;
+        present_info.pWaitSemaphores = &submit_semaphore;
+        present_info.swapchainCount = 1;
+        present_info.pSwapchains = &swapchain;
+        present_info.pImageIndices = &image_index;
+
+        vkQueuePresentKHR(device_layer.present_queue_, &present_info);
+
+        vkDeviceWaitIdle(device_layer);
         vkDestroyFramebuffer(device_layer, framebuffer, nullptr);
     }
+
+    std::cout << "end";
 
     for (auto attachment : attachments)
     {
