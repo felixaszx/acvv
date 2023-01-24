@@ -393,7 +393,7 @@ int main(int argc, char** argv)
     };
     auto pipeline2 = [&]()
     {
-        auto vert_shader_code = read_file("res/shader/vert.spv", std::ios::binary);
+        auto vert_shader_code = read_file("res/shader/vert2.spv", std::ios::binary);
         auto frag_shader_code = read_file("res/shader/frag2.spv", std::ios::binary);
         VeShaderBase vert_shader;
         VeShaderBase frag_shader;
@@ -501,9 +501,80 @@ int main(int argc, char** argv)
         vkUpdateDescriptorSets(device_layer, 1, &image_write, 0, nullptr);
     }
 
+    VkCommandPoolCreateInfo pool_info{};
+    pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    pool_info.queueFamilyIndex = device_layer.queue_family_indices.graphics;
+    VkCommandPool command_pool;
+    vkCreateCommandPool(device_layer, &pool_info, nullptr, &command_pool);
+
+    VkCommandBufferAllocateInfo cmd_alloc_info{};
+    cmd_alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    cmd_alloc_info.commandPool = command_pool;
+    cmd_alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    cmd_alloc_info.commandBufferCount = 1;
+    VkCommandBuffer cmd;
+    vkAllocateCommandBuffers(device_layer, &cmd_alloc_info, &cmd);
+
+    VkSemaphore image_semaphore;
+    VkSemaphore submit_semaphore;
+    VkFence frame_fence;
+
+    VkSemaphoreCreateInfo semaphore_info{};
+    semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+    VkFenceCreateInfo fence_info{};
+    fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+    vkCreateSemaphore(device_layer, &semaphore_info, nullptr, &image_semaphore);
+    vkCreateSemaphore(device_layer, &semaphore_info, nullptr, &submit_semaphore);
+    vkCreateFence(device_layer, &fence_info, nullptr, &frame_fence);
+
     while (!glfwWindowShouldClose(base_layer))
     {
         glfwPollEvents();
+
+        if (vkWaitForFences(device_layer, 1, &frame_fence, VK_TRUE, UINT64_MAX) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Fence error\n");
+        }
+        uint32_t image_index = 0;
+        vkAcquireNextImageKHR(device_layer, swapchain, UINT64_MAX, image_semaphore, VK_NULL_HANDLE, &image_index);
+        vkResetFences(device_layer, 1, &frame_fence);
+
+        VkImageView fattachments[] = {attachments[0], attachments[1], attachments[2], attachments[3],
+                                      swapchain.image_views_[image_index]};
+        VkFramebufferCreateInfo fcreate_info{};
+        fcreate_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        fcreate_info.renderPass = render_pass;
+        fcreate_info.attachmentCount = 5;
+        fcreate_info.pAttachments = fattachments;
+        fcreate_info.width = swapchain.extend_.width;
+        fcreate_info.height = swapchain.extend_.height;
+        fcreate_info.layers = 1;
+        VkFramebuffer framebuffer;
+        vkCreateFramebuffer(device_layer, &fcreate_info, nullptr, &framebuffer);
+
+        vkResetCommandBuffer(cmd, 0);
+        VkCommandBufferBeginInfo begin_info{};
+        begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        vkBeginCommandBuffer(cmd, &begin_info);
+        VkClearValue clear_value[5];
+        clear_value[0] = {{0.0f, 0.0f, 0.0f, 1.0f}};
+        clear_value[1] = {{0.0f, 0.0f, 0.0f, 1.0f}};
+        clear_value[2] = {{0.0f, 0.0f, 0.0f, 1.0f}};
+        clear_value[3] = {{1.0f, 0.0f}};
+        clear_value[4] = {{0.0f, 0.0f, 0.0f, 1.0f}};
+        VkRenderPassBeginInfo render_pass_info{};
+        render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        render_pass_info.renderPass = render_pass;
+        render_pass_info.framebuffer = framebuffer;
+        render_pass_info.renderArea.extent = swapchain.extend_;
+        render_pass_info.clearValueCount = 5;
+        render_pass_info.pClearValues = clear_value;
+        vkCmdBeginRenderPass(cmd, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+
+        vkDestroyFramebuffer(device_layer, framebuffer, nullptr);
     }
 
     for (auto attachment : attachments)
@@ -511,6 +582,13 @@ int main(int argc, char** argv)
         vkDestroyImageView(device_layer, attachment, nullptr);
         vmaDestroyImage(device_layer, attachment, attachment);
     }
+
+    vkDestroyFence(device_layer, frame_fence, nullptr);
+    vkDestroySemaphore(device_layer, image_semaphore, nullptr);
+    vkDestroySemaphore(device_layer, submit_semaphore, nullptr);
+
+    vkFreeCommandBuffers(device_layer, command_pool, 1, &cmd);
+    vkDestroyCommandPool(device_layer, command_pool, nullptr);
 
     vmaUnmapMemory(device_layer, uniform_buffer);
     vmaDestroyBuffer(device_layer, uniform_buffer, uniform_buffer);
