@@ -34,8 +34,9 @@ int main(int argc, char** argv)
                                      VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT};
     std::vector<VkExtent2D> extends(4, swapchain.extend_);
     std::vector<VkSampleCountFlagBits> samples(4, VK_SAMPLE_COUNT_1_BIT);
-    std::vector<VkImageUsageFlags> usages = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-                                             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+    std::vector<VkImageUsageFlags> usages = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
+                                             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
+                                             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
                                              VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT};
     std::vector<VkImageAspectFlags> aspects = {VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_ASPECT_COLOR_BIT,
                                                VK_IMAGE_ASPECT_COLOR_BIT,
@@ -232,7 +233,7 @@ int main(int argc, char** argv)
         set_alloc_info.descriptorSetCount = 1;
         set_alloc_info.pSetLayouts = set_layouts + 1;
         vkAllocateDescriptorSets(device_layer, &set_alloc_info, descriptor_sets + 1);
-        
+
         VkPipelineLayoutCreateInfo pipeline_layout_info{};
         pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipeline_layout_info.setLayoutCount = 1;
@@ -483,6 +484,22 @@ int main(int argc, char** argv)
     write.descriptorCount = 1;
     write.pBufferInfo = &buffer_info;
     vkUpdateDescriptorSets(device_layer, 1, &write, 0, nullptr);
+
+    for (int i = 0; i < 3; i++)
+    {
+        VkDescriptorImageInfo descriptor_image_info{};
+        descriptor_image_info.sampler = VK_NULL_HANDLE;
+        descriptor_image_info.imageView = attachments[i];
+        descriptor_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        VkWriteDescriptorSet image_write{};
+        image_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        image_write.dstSet = descriptor_sets[1];
+        image_write.dstBinding = i;
+        image_write.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+        image_write.descriptorCount = 1;
+        image_write.pImageInfo = &descriptor_image_info;
+        vkUpdateDescriptorSets(device_layer, 1, &image_write, 0, nullptr);
+    }
 
     while (!glfwWindowShouldClose(base_layer))
     {
