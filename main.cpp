@@ -469,19 +469,6 @@ int main(int argc, char** argv)
     pipeline1();
     pipeline2();
 
-    VkDescriptorBufferInfo buffer_info{};
-    buffer_info.buffer = uniform_buffer;
-    buffer_info.offset = 0;
-    buffer_info.range = VK_WHOLE_SIZE;
-    VkWriteDescriptorSet write{};
-    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    write.dstSet = descriptor_sets[0];
-    write.dstBinding = 0;
-    write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    write.descriptorCount = 1;
-    write.pBufferInfo = &buffer_info;
-    vkUpdateDescriptorSets(device_layer, 1, &write, 0, nullptr);
-
     for (int i = 0; i < 3; i++)
     {
         VkDescriptorImageInfo descriptor_image_info{};
@@ -530,6 +517,19 @@ int main(int argc, char** argv)
     while (!glfwWindowShouldClose(base_layer))
     {
         glfwPollEvents();
+
+        VkDescriptorBufferInfo buffer_info{};
+        buffer_info.buffer = uniform_buffer;
+        buffer_info.offset = 0;
+        buffer_info.range = VK_WHOLE_SIZE;
+        VkWriteDescriptorSet write{};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet = descriptor_sets[0];
+        write.dstBinding = 0;
+        write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        write.descriptorCount = 1;
+        write.pBufferInfo = &buffer_info;
+        vkUpdateDescriptorSets(device_layer, 1, &write, 0, nullptr);
 
         if (vkWaitForFences(device_layer, 1, &frame_fence, VK_TRUE, UINT64_MAX) != VK_SUCCESS)
         {
