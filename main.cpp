@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 
+#define VE_ENABLE_VALIDATION
 #include "ve_base.hpp"
 #include "ve_device.hpp"
 #include "ve_image.hpp"
@@ -628,8 +629,6 @@ int main(int argc, char** argv)
         vkDeviceWaitIdle(device_layer);
         vkDestroyFramebuffer(device_layer, framebuffer, nullptr);
     }
-
-    std::cout << "end";
 
     for (auto attachment : attachments)
     {

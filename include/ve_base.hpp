@@ -15,6 +15,12 @@
 #include "defines.hpp"
 #include "vma.hpp"
 
+#ifdef VE_ENABLE_VALIDATION
+#define ATTRIB_ENABLE_VALIDATION true
+#else 
+#define ATTRIB_ENABLE_VALIDATION false
+#endif
+
 using VeBase = MultiType<GLFWwindow*,                          //
                          VkInstance, VkDebugUtilsMessengerEXT, //
                          VkSurfaceKHR>;
@@ -28,13 +34,7 @@ struct VeBaseLayer : public VeBase
     const std::vector<const char*> VALIDATION_LAYERS = {"VK_LAYER_KHRONOS_validation"};
 
     using VeBase::operator=;
-    VeBaseLayer(uint32_t width, uint32_t height,
-#ifdef NDEBUG
-                bool debug = false
-#else
-                bool debug = false
-#endif
-    );
+    VeBaseLayer(uint32_t width, uint32_t height, bool debug = ATTRIB_ENABLE_VALIDATION);
     ~VeBaseLayer();
 
     void create(const std::string& name);
