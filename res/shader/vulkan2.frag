@@ -8,5 +8,5 @@ layout(input_attachment_index = 2, set = 0, binding = 2) uniform subpassInput no
 
 void main()
 {
-    result = subpassLoad(albedo);
+    result = subpassLoad(position);
 }

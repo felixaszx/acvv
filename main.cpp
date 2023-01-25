@@ -141,7 +141,6 @@ int main(int argc, char** argv)
                                 swapchain.extend_.width / (float)swapchain.extend_.height, //
                                 0.1f, 10.0f);
     ubo.proj[1][1] *= -1;
-    ubo.model = glm::mat4(1.0f);
 
     void* ubo_map = nullptr;
     VeBufferBase uniform_buffer;
@@ -514,9 +513,15 @@ int main(int argc, char** argv)
     vkCreateSemaphore(device_layer, &semaphore_info, nullptr, &submit_semaphore);
     vkCreateFence(device_layer, &fence_info, nullptr, &frame_fence);
 
+    auto start = std::chrono::high_resolution_clock::now();
     while (!glfwWindowShouldClose(base_layer))
     {
         glfwPollEvents();
+
+        auto curr = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration<float, std::chrono::seconds::period>(curr - start).count();
+        ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f * time), {0, 0, 1});
+        memcpy(ubo_map, &ubo, sizeof(ubo));
 
         VkDescriptorBufferInfo buffer_info{};
         buffer_info.buffer = uniform_buffer;

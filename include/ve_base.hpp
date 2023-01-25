@@ -6,6 +6,7 @@
 #include <vector>
 #include <array>
 #include <fstream>
+#include <chrono>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
