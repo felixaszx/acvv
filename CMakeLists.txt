@@ -12,6 +12,7 @@ target_include_directories(acvv PUBLIC include)
 
 # libraries-cpp
 target_link_libraries(acvv vulkan-1)
+target_link_libraries(acvv assimp)
 target_link_libraries(acvv glfw3)
 target_link_libraries(acvv fmt)
 target_link_libraries(acvv fltk)

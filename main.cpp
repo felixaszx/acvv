@@ -9,10 +9,9 @@
 #include "ve_buffer.hpp"
 #include "ve_cmd.hpp"
 #include "ve_graphic_pipeline.hpp"
+#include "ve_mesh.hpp"
 
 #include "glms.hpp"
-
-#include "tol.hpp"
 
 struct UniformBuffer
 {
@@ -23,6 +22,8 @@ struct UniformBuffer
 
 int main(int argc, char** argv)
 {
+    VeMesh<100> ccc("res/model/sponza/sponza.obj");
+
     VeBaseLayer base_layer(1920, 1080);
     base_layer.create("acvv");
 
