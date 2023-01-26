@@ -11,7 +11,7 @@ struct VeMeshVertex
     glm::vec3 positon_{};
     glm::vec3 normal_{};
     glm::vec3 uv_{};
-    glm::vec3 color_{1.0f, 0.0f, 0.0f};
+    glm::vec3 color_{1.0f, 1.0f, 1.0f};
 };
 
 class VeMesh

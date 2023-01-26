@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#define VE_ENABLE_VALIDATIONs
+#define VE_ENABLE_VALIDATION
 #include "ve_base.hpp"
 #include "ve_device.hpp"
 #include "ve_image.hpp"
@@ -35,8 +35,8 @@ int main(int argc, char** argv)
     VeMesh ccc("res/model/sponza/sponza.obj", 100);
     ccc.create(device_layer);
 
-    std::vector<VkFormat> formats = {VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_R16G16B16A16_SFLOAT,
-                                     VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT};
+    std::vector<VkFormat> formats = {VK_FORMAT_R32G32B32A32_SFLOAT, VK_FORMAT_R32G32B32A32_SFLOAT,
+                                     VK_FORMAT_R32G32B32A32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT};
     std::vector<VkExtent2D> extends(4, swapchain.extend_);
     std::vector<VkSampleCountFlagBits> samples(4, VK_SAMPLE_COUNT_1_BIT);
     std::vector<VkImageUsageFlags> usages = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
@@ -59,7 +59,7 @@ int main(int argc, char** argv)
     for (int i = 0; i < 5; i++)
     {
         attachment_descriptions[i].samples = VK_SAMPLE_COUNT_1_BIT;
-        attachment_descriptions[i].format = VK_FORMAT_R16G16B16A16_SFLOAT;
+        attachment_descriptions[i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
         attachment_descriptions[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         attachment_descriptions[i].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         attachment_descriptions[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -563,7 +563,7 @@ int main(int argc, char** argv)
         float time = std::chrono::duration<float, std::chrono::seconds::period>(curr - start).count();
         ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(1.0f * time), {0, 1, 0});
         memcpy(ubo_map, &ubo, sizeof(ubo));
-        ccc.current_instance = 5;
+        ccc.current_instance = 1;
         std::fill(ccc.instances_.begin(), ccc.instances_.end(), ubo.model);
 
         VkDescriptorBufferInfo buffer_info{};

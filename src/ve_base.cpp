@@ -7,6 +7,7 @@ VeBaseLayer::VeBaseLayer(uint32_t width, uint32_t height, bool debug)
 {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 }
 
 VeBaseLayer::~VeBaseLayer()
