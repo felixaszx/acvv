@@ -5,30 +5,31 @@
 
 #include "ve_buffer.hpp"
 
+struct VeMeshVertex
+{
+    glm::vec3 positon_{};
+    glm::vec3 normal_{};
+    glm::vec3 uv_{};
+    glm::vec3 color_{};
+};
+
 class VeMesh
 {
   private:
-    VeBufferBase VBO_POSITION{};
-    VeBufferBase VBO_NORMAL{};
-    VeBufferBase VBO_UVS{};
-    VeBufferBase VBO_COLORS{};
+    VeBufferBase VBO_{};
+    VeBufferBase VBO_INSTANCE_{};
 
-    VeBufferBase VBO_INSTANCE{};
-    VeBufferBase IBO_INSTANCE{};
+    VeBufferBase IBO_{};
 
   public:
-    std::vector<glm::vec3> positions{};
-    std::vector<glm::vec3> normals{};
-    std::vector<glm::vec3> uvs{};
-    std::vector<glm::vec3> colors{};
-
+    std::vector<VeMeshVertex> vertices{};
     std::vector<glm::vec3> indices{};
 
     void load();
     void draw();
-    std::array<VkVertexInputAttributeDescription, 5> get_attribute();
 
-    static VkVertexInputBindingDescription get_binding();
+    static std::array<VkVertexInputBindingDescription, 2> get_bindings();
+    static std::array<VkVertexInputAttributeDescription, 5> get_attributes();
 };
 
 #endif // VE_MESH_HPP
