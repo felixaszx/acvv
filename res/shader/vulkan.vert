@@ -1,5 +1,11 @@
 #version 450 core
 
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec3 normal;
+layout(location = 2) in vec3 uv;
+layout(location = 3) in vec3 color;
+layout(location = 4) in mat4 instance_matrix;
+
 layout(location = 0) out vec4 albedo_in;
 layout(location = 1) out vec4 position_in;
 layout(location = 2) out vec4 normal_in;
@@ -12,25 +18,11 @@ layout(binding = 0) uniform UniformBuffer
 }
 ubo;
 
-vec3 positions[12] = {vec3(-0.5f, -0.5f, 0.0f), //
-                      vec3(0.5f, -0.5f, 0.0f),  //
-                      vec3(0.5f, 0.5f, 0.0f),   //
-                      vec3(0.5f, 0.5f, 0.0f),   //
-                      vec3(-0.5f, 0.5f, 0.0f),  //
-                      vec3(-0.5f, -0.5f, 0.0f),
-                      //
-                      vec3(-0.5f, -0.5f, -0.5f), //
-                      vec3(0.5f, -0.5f, -0.5f),  //
-                      vec3(0.5f, 0.5f, -0.5f),   //
-                      vec3(0.5f, 0.5f, -0.5f),   //
-                      vec3(-0.5f, 0.5f, -0.5f),  //
-                      vec3(-0.5f, -0.5f, -0.5f)};
-
 void main()
 {
-    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(positions[gl_VertexIndex], 1.0);
+    albedo_in = vec4(color, 1);
+    position_in = ubo.proj * ubo.view * ubo.model * vec4(position, 1.0);
+    normal_in = vec4(normal, 1);
 
-    albedo_in = vec4(1, 0, 0, 1);
-    position_in = ubo.proj * ubo.view * ubo.model * vec4(positions[gl_VertexIndex], 1.0);
-    normal_in = vec4(0, 1, 0, 1);
+    gl_Position = position_in;
 }

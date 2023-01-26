@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#define VE_ENABLE_VALIDATION
+#define VE_ENABLE_VALIDATIONd
 #include "ve_base.hpp"
 #include "ve_device.hpp"
 #include "ve_image.hpp"
@@ -22,8 +22,6 @@ struct UniformBuffer
 
 int main(int argc, char** argv)
 {
-    VeMesh<100> ccc("res/model/sponza/sponza.obj");
-
     VeBaseLayer base_layer(1920, 1080);
     base_layer.create("acvv");
 
@@ -32,7 +30,10 @@ int main(int argc, char** argv)
 
     VeSwapchainBase swapchain;
     swapchain.create(base_layer, base_layer, device_layer);
-    swapchain.create_image_view(device_layer);
+    swapchain.create_image_view(device_layer); 
+
+    VeMesh ccc("res/model/sponza/sponza.obj", 100);
+    ccc.create(device_layer);
 
     std::vector<VkFormat> formats = {VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_R16G16B16A16_SFLOAT,
                                      VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT};
@@ -139,10 +140,10 @@ int main(int argc, char** argv)
     vkCreateRenderPass(device_layer, &render_pass_info, nullptr, &render_pass);
 
     UniformBuffer ubo{};
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.view = glm::lookAt(glm::vec3(2.0f, 40.0f, 2.0f), glm::vec3(2.0f, 40.0f, 2.0f) + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     ubo.proj = glm::perspective(glm::radians(45.0f),                                       //
                                 swapchain.extend_.width / (float)swapchain.extend_.height, //
-                                0.1f, 10.0f);
+                                0.1f, 1000.0f);
     ubo.proj[1][1] *= -1;
 
     void* ubo_map = nullptr;
@@ -247,6 +248,8 @@ int main(int argc, char** argv)
     descriptor0();
     descriptor1();
 
+    auto binding_description = VeMesh::get_bindings();
+    auto attribute_description = VeMesh::get_attributes();
     auto pipeline0 = [&]()
     {
         // pipeline
@@ -257,6 +260,10 @@ int main(int argc, char** argv)
 
         VkPipelineVertexInputStateCreateInfo vertex_input_info{};
         vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        vertex_input_info.vertexBindingDescriptionCount = binding_description.size();
+        vertex_input_info.pVertexBindingDescriptions = binding_description.data();
+        vertex_input_info.vertexAttributeDescriptionCount = attribute_description.size();
+        vertex_input_info.pVertexAttributeDescriptions = attribute_description.data();
 
         VkPipelineInputAssemblyStateCreateInfo input_assembly{};
         input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -327,6 +334,10 @@ int main(int argc, char** argv)
 
         VkPipelineVertexInputStateCreateInfo vertex_input_info{};
         vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        vertex_input_info.vertexBindingDescriptionCount = binding_description.size();
+        vertex_input_info.pVertexBindingDescriptions = binding_description.data();
+        vertex_input_info.vertexAttributeDescriptionCount = attribute_description.size();
+        vertex_input_info.pVertexAttributeDescriptions = attribute_description.data();
 
         VkPipelineInputAssemblyStateCreateInfo input_assembly{};
         input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -516,14 +527,40 @@ int main(int argc, char** argv)
     vkCreateSemaphore(device_layer, &semaphore_info, nullptr, &submit_semaphore);
     vkCreateFence(device_layer, &fence_info, nullptr, &frame_fence);
 
+    std::vector<VkFramebuffer> framebuffers(swapchain.image_views_.size());
+    for (int i = 0; i < swapchain.image_views_.size(); i++)
+    {
+        VkImageView fattachments[] = {attachments[0], attachments[1], attachments[2], attachments[3],
+                                      swapchain.image_views_[i]};
+        VkFramebufferCreateInfo fcreate_info{};
+        fcreate_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        fcreate_info.renderPass = render_pass;
+        fcreate_info.attachmentCount = 5;
+        fcreate_info.pAttachments = fattachments;
+        fcreate_info.width = swapchain.extend_.width;
+        fcreate_info.height = swapchain.extend_.height;
+        fcreate_info.layers = 1;
+        vkCreateFramebuffer(device_layer, &fcreate_info, nullptr, &framebuffers[i]);
+    }
+
     auto start = std::chrono::high_resolution_clock::now();
     while (!glfwWindowShouldClose(base_layer))
     {
         glfwPollEvents();
 
+        auto result = vkWaitForFences(device_layer, 1, &frame_fence, VK_TRUE, UINT64_MAX);
+        if (result != VK_SUCCESS)
+        {
+            throw std::runtime_error("Fence error\n");
+        }
+
+        uint32_t image_index = 0;
+        vkAcquireNextImageKHR(device_layer, swapchain, UINT64_MAX, image_semaphore, VK_NULL_HANDLE, &image_index);
+        vkResetFences(device_layer, 1, &frame_fence);
+
         auto curr = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration<float, std::chrono::seconds::period>(curr - start).count();
-        ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f * time), {0, 0, 1});
+        ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f * time), {0, 1, 0});
         memcpy(ubo_map, &ubo, sizeof(ubo));
 
         VkDescriptorBufferInfo buffer_info{};
@@ -539,27 +576,6 @@ int main(int argc, char** argv)
         write.pBufferInfo = &buffer_info;
         vkUpdateDescriptorSets(device_layer, 1, &write, 0, nullptr);
 
-        if (vkWaitForFences(device_layer, 1, &frame_fence, VK_TRUE, UINT64_MAX) != VK_SUCCESS)
-        {
-            throw std::runtime_error("Fence error\n");
-        }
-        uint32_t image_index = 0;
-        vkAcquireNextImageKHR(device_layer, swapchain, UINT64_MAX, image_semaphore, VK_NULL_HANDLE, &image_index);
-        vkResetFences(device_layer, 1, &frame_fence);
-
-        VkImageView fattachments[] = {attachments[0], attachments[1], attachments[2], attachments[3],
-                                      swapchain.image_views_[image_index]};
-        VkFramebufferCreateInfo fcreate_info{};
-        fcreate_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        fcreate_info.renderPass = render_pass;
-        fcreate_info.attachmentCount = 5;
-        fcreate_info.pAttachments = fattachments;
-        fcreate_info.width = swapchain.extend_.width;
-        fcreate_info.height = swapchain.extend_.height;
-        fcreate_info.layers = 1;
-        VkFramebuffer framebuffer;
-        vkCreateFramebuffer(device_layer, &fcreate_info, nullptr, &framebuffer);
-
         vkResetCommandBuffer(cmd, 0);
         VkCommandBufferBeginInfo begin_info{};
         begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -573,7 +589,7 @@ int main(int argc, char** argv)
         VkRenderPassBeginInfo render_pass_info{};
         render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         render_pass_info.renderPass = render_pass;
-        render_pass_info.framebuffer = framebuffer;
+        render_pass_info.framebuffer = framebuffers[image_index];
         render_pass_info.renderArea.extent = swapchain.extend_;
         render_pass_info.clearValueCount = 5;
         render_pass_info.pClearValues = clear_value;
@@ -591,7 +607,7 @@ int main(int argc, char** argv)
         vkCmdSetScissor(cmd, 0, 1, &scissor);
         vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts[0], 0, 1, descriptor_sets, 0,
                                 nullptr);
-        vkCmdDraw(cmd, 12, 1, 0, 0);
+        ccc.draw(cmd);
 
         vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipelines[1]);
@@ -599,7 +615,7 @@ int main(int argc, char** argv)
         vkCmdSetScissor(cmd, 0, 1, &scissor);
         vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts[0], 0, 1, descriptor_sets, 0,
                                 nullptr);
-        vkCmdDraw(cmd, 12, 1, 0, 0);
+        ccc.draw(cmd);
 
         vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipelines[2]);
@@ -608,6 +624,7 @@ int main(int argc, char** argv)
         vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts[1], 0, 1, descriptor_sets + 1, 0,
                                 nullptr);
         vkCmdDraw(cmd, 6, 1, 0, 0);
+
 
         vkCmdEndRenderPass(cmd);
         vkEndCommandBuffer(cmd);
@@ -635,6 +652,10 @@ int main(int argc, char** argv)
         vkQueuePresentKHR(device_layer.present_queue_, &present_info);
 
         vkDeviceWaitIdle(device_layer);
+    }
+
+    for (auto framebuffer : framebuffers)
+    {
         vkDestroyFramebuffer(device_layer, framebuffer, nullptr);
     }
 
@@ -666,6 +687,9 @@ int main(int argc, char** argv)
     }
 
     vkDestroyRenderPass(device_layer, render_pass, nullptr);
+
+    ccc.destroy(device_layer);
+
     swapchain.destroy(device_layer);
     device_layer.destroy();
     base_layer.destroy();

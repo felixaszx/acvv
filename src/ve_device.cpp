@@ -86,6 +86,7 @@ void VeDeviceLayer::create(VeBaseLayer& base_Layer)
 
     VkPhysicalDeviceFeatures device_features{};
     device_features.samplerAnisotropy = VK_TRUE;
+    device_features.fillModeNonSolid = VK_TRUE;
 
     VkDeviceCreateInfo device_create_info{};
     device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
