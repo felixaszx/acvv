@@ -58,6 +58,7 @@ VeMesh::VeMesh(const std::string file_path, uint32_t max_instance)
             indices_.push_back(mesh->mFaces[i].mIndices[1]);
             indices_.push_back(mesh->mFaces[i].mIndices[2]);
         }
+        
         indices_buffer_offsets_.push_back(indices_buffer_offset);
         indices_count_.push_back(3 * mesh->mNumFaces);
         indices_buffer_offset += 3 * mesh->mNumFaces;
