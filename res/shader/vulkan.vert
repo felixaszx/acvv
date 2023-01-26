@@ -21,7 +21,7 @@ ubo;
 void main()
 {
     albedo_in = vec4(color, 1);
-    position_in = ubo.proj * ubo.view * ubo.model * vec4(position, 1.0);
+    position_in = ubo.proj * ubo.view * instance_matrix * vec4(position, 1.0);
     normal_in = vec4(normal, 1);
 
     gl_Position = position_in;

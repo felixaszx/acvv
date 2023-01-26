@@ -4,6 +4,7 @@ VeMesh::VeMesh(const std::string file_path, uint32_t max_instance)
     : MAX_INSTANCE(max_instance)
 {
     instances_.resize(max_instance);
+    std::fill(instances_.begin(), instances_.end(), glm::mat4(1.0f));
 
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(file_path, aiProcess_Triangulate | aiProcess_GenNormals);
@@ -58,7 +59,7 @@ VeMesh::VeMesh(const std::string file_path, uint32_t max_instance)
             indices_.push_back(mesh->mFaces[i].mIndices[1]);
             indices_.push_back(mesh->mFaces[i].mIndices[2]);
         }
-        
+
         indices_buffer_offsets_.push_back(indices_buffer_offset);
         indices_count_.push_back(3 * mesh->mNumFaces);
         indices_buffer_offset += 3 * mesh->mNumFaces;
@@ -96,6 +97,11 @@ void VeMesh::create(VeDeviceLayer device_layer)
     instance_alloc_info.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
     vmaCreateBuffer(device_layer, &instance_buffer_info, &instance_alloc_info, &instance_buffer_, &instance_buffer_,
                     nullptr);
+    vmaMapMemory(device_layer, instance_buffer_, &instance_mapping_);
+    if (instance_mapping_ == nullptr)
+    {
+        std::cout << "Do not map instance buffer" << std::endl;
+    }
 
     void* staging_mapping = nullptr;
     VeBufferBase staging_buffer{};
@@ -145,6 +151,9 @@ void VeMesh::create(VeDeviceLayer device_layer)
 
 void VeMesh::draw(VkCommandBuffer cmd)
 {
+    uint32_t update_size = current_instance < MAX_INSTANCE ? current_instance : MAX_INSTANCE;
+    memcpy(instance_mapping_, instances_.data(), update_size * sizeof(glm::mat4));
+
     for (size_t i = 0; i < vert_buffer_offsets_.size(); i++)
     {
         VkBuffer vertex_buffers[2] = {vert_buffer_, instance_buffer_};
@@ -152,15 +161,16 @@ void VeMesh::draw(VkCommandBuffer cmd)
         vkCmdBindVertexBuffers(cmd, 0, 2, vertex_buffers, vert_offsets);
         vkCmdBindIndexBuffer(cmd, index_buffer_, indices_buffer_offsets_[i] * sizeof(uint32_t), VK_INDEX_TYPE_UINT32);
 
-        vkCmdDrawIndexed(cmd, indices_count_[i], 1, 0, 0, 0);
+        vkCmdDrawIndexed(cmd, indices_count_[i], update_size, 0, 0, 0);
     }
 }
 
 void VeMesh::destroy(VeDeviceLayer device_layer)
 {
+    vmaUnmapMemory(device_layer, instance_buffer_);
+    vmaDestroyBuffer(device_layer, instance_buffer_, instance_buffer_);
     vmaDestroyBuffer(device_layer, vert_buffer_, vert_buffer_);
     vmaDestroyBuffer(device_layer, index_buffer_, index_buffer_);
-    vmaDestroyBuffer(device_layer, instance_buffer_, instance_buffer_);
 }
 
 std::array<VkVertexInputBindingDescription, 2> VeMesh::get_bindings()

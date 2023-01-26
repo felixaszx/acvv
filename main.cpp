@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#define VE_ENABLE_VALIDATIONd
+#define VE_ENABLE_VALIDATIONs
 #include "ve_base.hpp"
 #include "ve_device.hpp"
 #include "ve_image.hpp"
@@ -30,7 +30,7 @@ int main(int argc, char** argv)
 
     VeSwapchainBase swapchain;
     swapchain.create(base_layer, base_layer, device_layer);
-    swapchain.create_image_view(device_layer); 
+    swapchain.create_image_view(device_layer);
 
     VeMesh ccc("res/model/sponza/sponza.obj", 100);
     ccc.create(device_layer);
@@ -140,7 +140,8 @@ int main(int argc, char** argv)
     vkCreateRenderPass(device_layer, &render_pass_info, nullptr, &render_pass);
 
     UniformBuffer ubo{};
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 40.0f, 2.0f), glm::vec3(2.0f, 40.0f, 2.0f) + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    ubo.view = glm::lookAt(glm::vec3(2.0f, 40.0f, 2.0f), glm::vec3(2.0f, 40.0f, 2.0f) + glm::vec3(0.0f, 0.0f, 1.0f),
+                           glm::vec3(0.0f, 1.0f, 0.0f));
     ubo.proj = glm::perspective(glm::radians(45.0f),                                       //
                                 swapchain.extend_.width / (float)swapchain.extend_.height, //
                                 0.1f, 1000.0f);
@@ -560,8 +561,10 @@ int main(int argc, char** argv)
 
         auto curr = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration<float, std::chrono::seconds::period>(curr - start).count();
-        ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f * time), {0, 1, 0});
+        ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(1.0f * time), {0, 1, 0});
         memcpy(ubo_map, &ubo, sizeof(ubo));
+        ccc.current_instance = 5;
+        std::fill(ccc.instances_.begin(), ccc.instances_.end(), ubo.model);
 
         VkDescriptorBufferInfo buffer_info{};
         buffer_info.buffer = uniform_buffer;
@@ -624,7 +627,6 @@ int main(int argc, char** argv)
         vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts[1], 0, 1, descriptor_sets + 1, 0,
                                 nullptr);
         vkCmdDraw(cmd, 6, 1, 0, 0);
-
 
         vkCmdEndRenderPass(cmd);
         vkEndCommandBuffer(cmd);

@@ -17,8 +17,6 @@ struct VeMeshVertex
 class VeMesh
 {
   private:
-    const uint32_t MAX_INSTANCE;
-
     VeBufferBase vert_buffer_{};
     VeBufferBase vert_buffer_INSTANCE_{};
     std::vector<VeMeshVertex> vertices_{};
@@ -30,10 +28,14 @@ class VeMesh
     std::vector<size_t> vert_buffer_offsets_{};
     std::vector<size_t> indices_buffer_offsets_{};
 
+    void* instance_mapping_ = nullptr;
     VeBufferBase instance_buffer_{};
-    std::vector<glm::mat4> instances_{};
 
   public:
+    const uint32_t MAX_INSTANCE;
+    uint32_t current_instance = 1;
+    std::vector<glm::mat4> instances_{};
+
     VeMesh(const std::string file_path, uint32_t max_instance);
 
     void create(VeDeviceLayer device_layer);
