@@ -113,22 +113,25 @@ void VeMultiThreadRecord::record(const std::function<void(VkCommandBuffer)>& rec
             return;
         }
 
-        vkResetCommandBuffer(cmds_[curr_cmd], 0);
-        VkCommandBufferBeginInfo begin_info{};
-        begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        begin_info.flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
-        begin_info.pInheritanceInfo = &inheritance_;
-
-        if (vkBeginCommandBuffer(cmds_[curr_cmd], &begin_info) != VK_SUCCESS)
+        if (curr_cmd < cmds_.size())
         {
-            std::cout << "This secondary commandbuffer do not start" << std::endl;
-        }
+            vkResetCommandBuffer(cmds_[curr_cmd], 0);
+            VkCommandBufferBeginInfo begin_info{};
+            begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            begin_info.flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
+            begin_info.pInheritanceInfo = &inheritance_;
 
-        recording_func(cmds_[curr_cmd]);
+            if (vkBeginCommandBuffer(cmds_[curr_cmd], &begin_info) != VK_SUCCESS)
+            {
+                std::cout << "This secondary commandbuffer do not start" << std::endl;
+            }
 
-        if (vkEndCommandBuffer(cmds_[curr_cmd]) != VK_SUCCESS)
-        {
-            std::cout << "This secondary commandbuffer do not end" << std::endl;
+            recording_func(cmds_[curr_cmd]);
+
+            if (vkEndCommandBuffer(cmds_[curr_cmd]) != VK_SUCCESS)
+            {
+                std::cout << "This secondary commandbuffer do not end" << std::endl;
+            }
         }
 
         sem_post(&finish_semaphore_);
