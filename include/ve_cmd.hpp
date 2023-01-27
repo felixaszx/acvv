@@ -36,7 +36,7 @@ class VeMultiThreadRecord
     VkCommandBuffer get(uint32_t cmd_index = 0);
     void begin(VkCommandBufferInheritanceInfo inheritance, uint32_t cmd_index = 0);
     void wait();
-    void excute(VkCommandBuffer primary_cmd);
+    void wait_than_excute(VkCommandBuffer primary_cmd);
     void terminate();
 
     void operator()(const std::function<void(VkCommandBuffer)>& recording_func);

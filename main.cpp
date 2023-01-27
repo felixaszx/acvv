@@ -645,10 +645,10 @@ int main(int argc, char** argv)
         render_pass_info.pClearValues = clear_value;
 
         vkCmdBeginRenderPass(cmd, &render_pass_info, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
-        record0.excute(cmd);
+        record0.wait_than_excute(cmd);
 
         vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
-        record1.excute(cmd);
+        record1.wait_than_excute(cmd);
 
         vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipelines[2]);
