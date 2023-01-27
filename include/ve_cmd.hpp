@@ -26,8 +26,8 @@ class VeMultiThreadRecord
     VkCommandBufferInheritanceInfo inheritance_{};
 
     std::atomic_bool terminated = false;
-    std::vector<sem_t> begin_semaphores_{};
-    std::vector<sem_t> finish_semaphores_{};
+    sem_t begin_semaphore_{};
+    sem_t finish_semaphore_{};
 
   public:
     void create(VeDeviceLayer& device_layer, uint32_t cmd_count = 1);
@@ -39,6 +39,7 @@ class VeMultiThreadRecord
     void wait_than_excute(VkCommandBuffer primary_cmd);
     void terminate();
 
+    void record(const std::function<void(VkCommandBuffer)>& recording_func);
     void operator()(const std::function<void(VkCommandBuffer)>& recording_func);
 };
 

@@ -63,22 +63,14 @@ void VeMultiThreadRecord::create(VeDeviceLayer& device_layer, uint32_t cmd_count
     alloc_info.commandBufferCount = cmd_count;
     vkAllocateCommandBuffers(device_layer, &alloc_info, cmds_.data());
 
-    begin_semaphores_.resize(cmd_count);
-    finish_semaphores_.resize(cmd_count);
-    for (uint32_t i = 0; i < cmd_count; i++)
-    {
-        sem_init(&begin_semaphores_[i], 0, 0);
-        sem_init(&finish_semaphores_[i], 0, 0);
-    }
+    sem_init(&begin_semaphore_, 0, 0);
+    sem_init(&finish_semaphore_, 0, 0);
 }
 
 void VeMultiThreadRecord::destroy(VeDeviceLayer& device_layer)
 {
-    for (uint32_t i = 0; i < begin_semaphores_.size(); i++)
-    {
-        sem_destroy(&begin_semaphores_[i]);
-        sem_destroy(&finish_semaphores_[i]);
-    }
+    sem_destroy(&begin_semaphore_);
+    sem_destroy(&finish_semaphore_);
     vkDestroyCommandPool(device_layer, pool_, nullptr);
 }
 
@@ -91,12 +83,12 @@ void VeMultiThreadRecord::begin(VkCommandBufferInheritanceInfo inheritance, uint
 {
     inheritance_ = inheritance;
     curr_cmd = cmd_index;
-    sem_post(&begin_semaphores_[cmd_index]);
+    sem_post(&begin_semaphore_);
 }
 
 void VeMultiThreadRecord::wait()
 {
-    sem_wait(&finish_semaphores_[curr_cmd]);
+    sem_wait(&finish_semaphore_);
 }
 
 void VeMultiThreadRecord::wait_than_excute(VkCommandBuffer primary_cmd)
@@ -111,11 +103,11 @@ void VeMultiThreadRecord::terminate()
     begin({});
 }
 
-void VeMultiThreadRecord::operator()(const std::function<void(VkCommandBuffer)>& recording_func)
+void VeMultiThreadRecord::record(const std::function<void(VkCommandBuffer)>& recording_func)
 {
     while (true)
     {
-        sem_wait(&begin_semaphores_[curr_cmd]);
+        sem_wait(&begin_semaphore_);
         if (terminated)
         {
             return;
@@ -139,6 +131,11 @@ void VeMultiThreadRecord::operator()(const std::function<void(VkCommandBuffer)>&
             std::cout << "This secondary commandbuffer do not end" << std::endl;
         }
 
-        sem_post(&finish_semaphores_[curr_cmd]);
+        sem_post(&finish_semaphore_);
     }
+}
+
+void VeMultiThreadRecord::operator()(const std::function<void(VkCommandBuffer)>& recording_func)
+{
+    record(recording_func);
 }
