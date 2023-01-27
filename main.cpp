@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#define VE_ENABLE_VALIDATION
+#define VE_ENABLE_VALIDATIONs
 #include "ve_base.hpp"
 #include "ve_device.hpp"
 #include "ve_image.hpp"
