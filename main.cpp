@@ -561,7 +561,7 @@ int main(int argc, char** argv)
     record1.create(device_layer);
 
     std::thread record_th0(std::ref(record0),
-                           [=, &ccc](VkCommandBuffer secondary_cmd)
+                           [&](VkCommandBuffer secondary_cmd)
                            {
                                vkCmdBindPipeline(secondary_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipelines[0]);
                                vkCmdSetViewport(secondary_cmd, 0, 1, &viewport);
@@ -572,7 +572,7 @@ int main(int argc, char** argv)
                            });
 
     std::thread record_th1(std::ref(record1),
-                           [=, &ccc](VkCommandBuffer secondary_cmd)
+                           [&](VkCommandBuffer secondary_cmd)
                            {
                                vkCmdBindPipeline(secondary_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipelines[1]);
                                vkCmdSetViewport(secondary_cmd, 0, 1, &viewport);
@@ -601,7 +601,7 @@ int main(int argc, char** argv)
         ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(1.0f * time), {0, 1, 0});
         memcpy(ubo_map, &ubo, sizeof(ubo));
         ccc.current_instance = 1;
-        std::fill(ccc.instances_.begin(), ccc.instances_.end(), ubo.model);
+        std::fill(ccc.instances_.begin(), ccc.instances_.begin() + 1, ubo.model);
 
         VkDescriptorBufferInfo buffer_info{};
         buffer_info.buffer = uniform_buffer;
