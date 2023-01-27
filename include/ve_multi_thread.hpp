@@ -3,6 +3,7 @@
 
 #include <thread>
 #include <atomic>
+#include <mutex>
 #include <semaphore.h>
 #include <assert.h>
 
