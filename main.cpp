@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#define VE_ENABLE_VALIDATION
+#define VE_ENABLE_VALIDATIONj
 #include "ve_base.hpp"
 #include "ve_device.hpp"
 #include "ve_image.hpp"
@@ -251,6 +251,7 @@ int main(int argc, char** argv)
 
     auto binding_description = VeMesh::get_bindings();
     auto attribute_description = VeMesh::get_attributes();
+
     auto pipeline0 = [&]()
     {
         // pipeline
@@ -544,17 +545,53 @@ int main(int argc, char** argv)
         vkCreateFramebuffer(device_layer, &fcreate_info, nullptr, &framebuffers[i]);
     }
 
+    uint32_t curr_frame = 0;
     auto start = std::chrono::high_resolution_clock::now();
+
+    VkViewport viewport{};
+    viewport.width = casts(uint32_t, swapchain.extend_.width);
+    viewport.height = casts(uint32_t, swapchain.extend_.height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    VkRect2D scissor{};
+    scissor.extent = swapchain.extend_;
+
+    VeMultiThreadRecord record0;
+    VeMultiThreadRecord record1;
+    record0.create(device_layer);
+    record1.create(device_layer);
+
+    std::thread record_th0(std::ref(record0),
+                           [=, &ccc](VkCommandBuffer secondary_cmd)
+                           {
+                               vkCmdBindPipeline(secondary_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipelines[0]);
+                               vkCmdSetViewport(secondary_cmd, 0, 1, &viewport);
+                               vkCmdSetScissor(secondary_cmd, 0, 1, &scissor);
+                               vkCmdBindDescriptorSets(secondary_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                                       pipeline_layouts[0], 0, 1, descriptor_sets, 0, nullptr);
+                               ccc.draw(secondary_cmd);
+                           });
+    std::thread record_th1(std::ref(record1),
+                           [=, &ccc](VkCommandBuffer secondary_cmd)
+                           {
+                               vkCmdBindPipeline(secondary_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipelines[1]);
+                               vkCmdSetViewport(secondary_cmd, 0, 1, &viewport);
+                               vkCmdSetScissor(secondary_cmd, 0, 1, &scissor);
+                               vkCmdBindDescriptorSets(secondary_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                                       pipeline_layouts[0], 0, 1, descriptor_sets, 0, nullptr);
+                               ccc.draw(secondary_cmd);
+                           });
+
     while (!glfwWindowShouldClose(base_layer))
     {
         glfwPollEvents();
+        ccc.update();
 
         auto result = vkWaitForFences(device_layer, 1, &frame_fence, VK_TRUE, UINT64_MAX);
         if (result != VK_SUCCESS)
         {
             throw std::runtime_error("Fence error\n");
         }
-
         uint32_t image_index = 0;
         vkAcquireNextImageKHR(device_layer, swapchain, UINT64_MAX, image_semaphore, VK_NULL_HANDLE, &image_index);
         vkResetFences(device_layer, 1, &frame_fence);
@@ -579,6 +616,15 @@ int main(int argc, char** argv)
         write.pBufferInfo = &buffer_info;
         vkUpdateDescriptorSets(device_layer, 1, &write, 0, nullptr);
 
+        VkCommandBufferInheritanceInfo iifo{};
+        iifo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
+        iifo.renderPass = render_pass;
+        iifo.subpass = 0;
+        iifo.framebuffer = framebuffers[image_index];
+        record0.begin(iifo);
+        iifo.subpass = 1;
+        record1.begin(iifo);
+
         vkResetCommandBuffer(cmd, 0);
         VkCommandBufferBeginInfo begin_info{};
         begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -596,29 +642,17 @@ int main(int argc, char** argv)
         render_pass_info.renderArea.extent = swapchain.extend_;
         render_pass_info.clearValueCount = 5;
         render_pass_info.pClearValues = clear_value;
-        vkCmdBeginRenderPass(cmd, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipelines[0]);
-        VkViewport viewport{};
-        viewport.width = casts(uint32_t, swapchain.extend_.width);
-        viewport.height = casts(uint32_t, swapchain.extend_.height);
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
-        vkCmdSetViewport(cmd, 0, 1, &viewport);
-        VkRect2D scissor{};
-        scissor.extent = swapchain.extend_;
-        vkCmdSetScissor(cmd, 0, 1, &scissor);
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts[0], 0, 1, descriptor_sets, 0,
-                                nullptr);
-        ccc.draw(cmd);
+        record0.wait();
+        record1.wait();
 
-        vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipelines[1]);
-        vkCmdSetViewport(cmd, 0, 1, &viewport);
-        vkCmdSetScissor(cmd, 0, 1, &scissor);
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts[0], 0, 1, descriptor_sets, 0,
-                                nullptr);
-        ccc.draw(cmd);
+        vkCmdBeginRenderPass(cmd, &render_pass_info, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+        VkCommandBuffer secondarys = record0.get();
+        vkCmdExecuteCommands(cmd, 1, &secondarys);
+
+        vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+        secondarys = record1.get();
+        vkCmdExecuteCommands(cmd, 1, &secondarys);
 
         vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipelines[2]);
@@ -655,7 +689,13 @@ int main(int argc, char** argv)
 
         vkDeviceWaitIdle(device_layer);
     }
+    record0.terminate();
+    record_th0.join();
+    record1.terminate();
+    record_th1.join();
 
+    record0.destroy(device_layer);
+    record1.destroy(device_layer);
     for (auto framebuffer : framebuffers)
     {
         vkDestroyFramebuffer(device_layer, framebuffer, nullptr);

@@ -151,9 +151,6 @@ void VeMesh::create(VeDeviceLayer device_layer)
 
 void VeMesh::draw(VkCommandBuffer cmd)
 {
-    uint32_t update_size = current_instance < MAX_INSTANCE ? current_instance : MAX_INSTANCE;
-    memcpy(instance_mapping_, instances_.data(), update_size * sizeof(glm::mat4));
-
     for (size_t i = 0; i < vert_buffer_offsets_.size(); i++)
     {
         VkBuffer vertex_buffers[2] = {vert_buffer_, instance_buffer_};
@@ -163,6 +160,12 @@ void VeMesh::draw(VkCommandBuffer cmd)
 
         vkCmdDrawIndexed(cmd, indices_count_[i], update_size, 0, 0, 0);
     }
+}
+
+void VeMesh::update()
+{
+    update_size = current_instance < MAX_INSTANCE ? current_instance : MAX_INSTANCE;
+    memcpy(instance_mapping_, instances_.data(), update_size * sizeof(glm::mat4));
 }
 
 void VeMesh::destroy(VeDeviceLayer device_layer)

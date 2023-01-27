@@ -30,6 +30,7 @@ class VeMesh
 
     void* instance_mapping_ = nullptr;
     VeBufferBase instance_buffer_{};
+    uint32_t update_size = 1;
 
   public:
     const uint32_t MAX_INSTANCE;
@@ -40,6 +41,7 @@ class VeMesh
 
     void create(VeDeviceLayer device_layer);
     void draw(VkCommandBuffer cmd);
+    void update();
     void destroy(VeDeviceLayer device_layer);
 
     static std::array<VkVertexInputBindingDescription, 2> get_bindings();
