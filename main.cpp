@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#define VE_ENABLE_VALIDATIONj
+#define VE_ENABLE_VALIDATION
 #include "ve_base.hpp"
 #include "ve_device.hpp"
 #include "ve_image.hpp"
@@ -571,6 +571,7 @@ int main(int argc, char** argv)
                                                        pipeline_layouts[0], 0, 1, descriptor_sets, 0, nullptr);
                                ccc.draw(secondary_cmd);
                            });
+                           
     std::thread record_th1(std::ref(record1),
                            [=, &ccc](VkCommandBuffer secondary_cmd)
                            {
