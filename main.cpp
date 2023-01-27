@@ -545,7 +545,6 @@ int main(int argc, char** argv)
         vkCreateFramebuffer(device_layer, &fcreate_info, nullptr, &framebuffers[i]);
     }
 
-    uint32_t curr_frame = 0;
     auto start = std::chrono::high_resolution_clock::now();
 
     VkViewport viewport{};
