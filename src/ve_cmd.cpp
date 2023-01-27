@@ -63,14 +63,14 @@ void VeMultiThreadRecord::create(VeDeviceLayer& device_layer, uint32_t cmd_count
     alloc_info.commandBufferCount = cmd_count;
     vkAllocateCommandBuffers(device_layer, &alloc_info, cmds_.data());
 
-    sem_init(&begin_semaphore_, 0, 0);
-    sem_init(&finish_semaphore_, 0, 0);
+    begin_semaphore_.create(0);
+    finish_semaphore_.create(0);
 }
 
 void VeMultiThreadRecord::destroy(VeDeviceLayer& device_layer)
 {
-    sem_destroy(&begin_semaphore_);
-    sem_destroy(&finish_semaphore_);
+    begin_semaphore_.destroy();
+    finish_semaphore_.destroy();
     vkDestroyCommandPool(device_layer, pool_, nullptr);
 }
 
@@ -83,12 +83,12 @@ void VeMultiThreadRecord::begin(VkCommandBufferInheritanceInfo inheritance, uint
 {
     inheritance_ = inheritance;
     curr_cmd = cmd_index;
-    sem_post(&begin_semaphore_);
+    begin_semaphore_.signal();
 }
 
 void VeMultiThreadRecord::wait()
 {
-    sem_wait(&finish_semaphore_);
+    finish_semaphore_.wait();
 }
 
 void VeMultiThreadRecord::wait_than_excute(VkCommandBuffer primary_cmd)
@@ -107,7 +107,7 @@ void VeMultiThreadRecord::record(const std::function<void(VkCommandBuffer)>& rec
 {
     while (true)
     {
-        sem_wait(&begin_semaphore_);
+        begin_semaphore_.wait();
         if (terminated)
         {
             return;
@@ -134,7 +134,7 @@ void VeMultiThreadRecord::record(const std::function<void(VkCommandBuffer)>& rec
             }
         }
 
-        sem_post(&finish_semaphore_);
+        finish_semaphore_.signal();
     }
 }
 

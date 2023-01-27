@@ -7,9 +7,6 @@
 #include <array>
 #include <fstream>
 #include <chrono>
-#include <thread>
-#include <semaphore.h>
-#include <atomic>
 #include <functional>
 
 #define GLFW_INCLUDE_VULKAN

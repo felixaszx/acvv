@@ -1,6 +1,7 @@
 #ifndef VK_CMD_HPP
 #define VK_CMD_HPP
 
+#include "ve_multi_thread.hpp"
 #include "ve_base.hpp"
 #include "ve_device.hpp"
 
@@ -26,8 +27,8 @@ class VeMultiThreadRecord
     VkCommandBufferInheritanceInfo inheritance_{};
 
     std::atomic_bool terminated = false;
-    sem_t begin_semaphore_{};
-    sem_t finish_semaphore_{};
+    VeSemaphore begin_semaphore_{};
+    VeSemaphore finish_semaphore_{};
 
   public:
     void create(VeDeviceLayer& device_layer, uint32_t cmd_count = 1);
