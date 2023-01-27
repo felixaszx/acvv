@@ -30,13 +30,13 @@ class VeMultiThreadRecord
     std::vector<sem_t> finish_semaphores_{};
 
   public:
-
     void create(VeDeviceLayer& device_layer, uint32_t cmd_count = 1);
     void destroy(VeDeviceLayer& device_layer);
 
     VkCommandBuffer get(uint32_t cmd_index = 0);
     void begin(VkCommandBufferInheritanceInfo inheritance, uint32_t cmd_index = 0);
     void wait();
+    void excute(VkCommandBuffer primary_cmd);
     void terminate();
 
     void operator()(const std::function<void(VkCommandBuffer)>& recording_func);

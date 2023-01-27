@@ -99,6 +99,12 @@ void VeMultiThreadRecord::wait()
     sem_wait(&finish_semaphores_[curr_cmd]);
 }
 
+void VeMultiThreadRecord::excute(VkCommandBuffer primary_cmd)
+{
+    wait();
+    vkCmdExecuteCommands(primary_cmd, 1, &cmds_[curr_cmd]);
+}
+
 void VeMultiThreadRecord::terminate()
 {
     terminated = true;
