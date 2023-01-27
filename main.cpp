@@ -571,7 +571,7 @@ int main(int argc, char** argv)
                                                        pipeline_layouts[0], 0, 1, descriptor_sets, 0, nullptr);
                                ccc.draw(secondary_cmd);
                            });
-                           
+
     std::thread record_th1(std::ref(record1),
                            [=, &ccc](VkCommandBuffer secondary_cmd)
                            {
@@ -644,14 +644,14 @@ int main(int argc, char** argv)
         render_pass_info.clearValueCount = 5;
         render_pass_info.pClearValues = clear_value;
 
-        record0.wait();
-        record1.wait();
 
         vkCmdBeginRenderPass(cmd, &render_pass_info, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+        record0.wait();
         VkCommandBuffer secondarys = record0.get();
         vkCmdExecuteCommands(cmd, 1, &secondarys);
 
         vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+        record1.wait();
         secondarys = record1.get();
         vkCmdExecuteCommands(cmd, 1, &secondarys);
 
