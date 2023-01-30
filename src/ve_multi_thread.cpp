@@ -38,3 +38,28 @@ int VeSemaphore::get_value()
     sem_getvalue(&semaphore_, &value);
     return value;
 }
+
+void VeGpuSemaphore::create(VkDevice device)
+{
+    VkSemaphoreCreateInfo semaphore_info{};
+    semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    vkCreateSemaphore(device, &semaphore_info, nullptr, this->ptr());
+}
+
+void VeGpuSemaphore::destroy(VkDevice device)
+{
+    vkDestroySemaphore(device, *this, nullptr);
+}
+
+void VeGpuFence::create(VkDevice device, bool signal)
+{
+    VkFenceCreateInfo fence_info{};
+    fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fence_info.flags = signal ? VK_FENCE_CREATE_SIGNALED_BIT : 0;
+    vkCreateFence(device, &fence_info, nullptr, this->ptr());
+}
+
+void VeGpuFence::destroy(VkDevice device)
+{
+    vkDestroyFence(device, *this, nullptr);
+}

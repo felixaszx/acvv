@@ -515,19 +515,12 @@ int main(int argc, char** argv)
     VkCommandBuffer cmd;
     vkAllocateCommandBuffers(device_layer, &cmd_alloc_info, &cmd);
 
-    VkSemaphore image_semaphore;
-    VkSemaphore submit_semaphore;
-    VkFence frame_fence;
-
-    VkSemaphoreCreateInfo semaphore_info{};
-    semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-    VkFenceCreateInfo fence_info{};
-    fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-    vkCreateSemaphore(device_layer, &semaphore_info, nullptr, &image_semaphore);
-    vkCreateSemaphore(device_layer, &semaphore_info, nullptr, &submit_semaphore);
-    vkCreateFence(device_layer, &fence_info, nullptr, &frame_fence);
+    VeGpuSemaphore image_semaphore;
+    VeGpuSemaphore submit_semaphore;
+    image_semaphore.create(device_layer);
+    submit_semaphore.create(device_layer);
+    VeGpuFence frame_fence;
+    frame_fence.create(device_layer, true);
 
     std::vector<VkFramebuffer> framebuffers(swapchain.image_views_.size());
     for (int i = 0; i < swapchain.image_views_.size(); i++)
@@ -702,9 +695,9 @@ int main(int argc, char** argv)
         vmaDestroyImage(device_layer, attachment, attachment);
     }
 
-    vkDestroyFence(device_layer, frame_fence, nullptr);
-    vkDestroySemaphore(device_layer, image_semaphore, nullptr);
-    vkDestroySemaphore(device_layer, submit_semaphore, nullptr);
+    frame_fence.destroy(device_layer);
+    image_semaphore.destroy(device_layer);
+    submit_semaphore.destroy(device_layer);
 
     vkFreeCommandBuffers(device_layer, command_pool, 1, &cmd);
     vkDestroyCommandPool(device_layer, command_pool, nullptr);
