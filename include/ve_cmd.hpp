@@ -18,7 +18,7 @@ class VeSingleTimeCmdBase : public MultiType<VkCommandPool, VkCommandBuffer>
     void end(VeDeviceLayer& device_layer, VkCommandPool pool);
 };
 
-class VeMultiThreadRecord
+class VeMultiThreadCmdRecorder
 {
   private:
     uint32_t curr_cmd = 0;

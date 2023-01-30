@@ -47,7 +47,7 @@ void VeSingleTimeCmdBase::end(VeDeviceLayer& device_layer, VkCommandPool pool)
     vkFreeCommandBuffers(device_layer, pool, 1, this->ptr());
 }
 
-void VeMultiThreadRecord::create(VeDeviceLayer& device_layer, uint32_t cmd_count)
+void VeMultiThreadCmdRecorder::create(VeDeviceLayer& device_layer, uint32_t cmd_count)
 {
     VkCommandPoolCreateInfo pool_info{};
     pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -67,43 +67,43 @@ void VeMultiThreadRecord::create(VeDeviceLayer& device_layer, uint32_t cmd_count
     finish_semaphore_.create(0);
 }
 
-void VeMultiThreadRecord::destroy(VeDeviceLayer& device_layer)
+void VeMultiThreadCmdRecorder::destroy(VeDeviceLayer& device_layer)
 {
     begin_semaphore_.destroy();
     finish_semaphore_.destroy();
     vkDestroyCommandPool(device_layer, pool_, nullptr);
 }
 
-VkCommandBuffer VeMultiThreadRecord::get(uint32_t cmd_index)
+VkCommandBuffer VeMultiThreadCmdRecorder::get(uint32_t cmd_index)
 {
     return cmds_[cmd_index];
 }
 
-void VeMultiThreadRecord::begin(VkCommandBufferInheritanceInfo inheritance, uint32_t cmd_index)
+void VeMultiThreadCmdRecorder::begin(VkCommandBufferInheritanceInfo inheritance, uint32_t cmd_index)
 {
     inheritance_ = inheritance;
     curr_cmd = cmd_index;
     begin_semaphore_.signal();
 }
 
-void VeMultiThreadRecord::wait()
+void VeMultiThreadCmdRecorder::wait()
 {
     finish_semaphore_.wait();
 }
 
-void VeMultiThreadRecord::wait_than_excute(VkCommandBuffer primary_cmd)
+void VeMultiThreadCmdRecorder::wait_than_excute(VkCommandBuffer primary_cmd)
 {
     wait();
     vkCmdExecuteCommands(primary_cmd, 1, &cmds_[curr_cmd]);
 }
 
-void VeMultiThreadRecord::terminate()
+void VeMultiThreadCmdRecorder::terminate()
 {
     terminated = true;
     begin({});
 }
 
-void VeMultiThreadRecord::record(const std::function<void(VkCommandBuffer)>& recording_func)
+void VeMultiThreadCmdRecorder::record(const std::function<void(VkCommandBuffer)>& recording_func)
 {
     while (true)
     {
@@ -138,7 +138,7 @@ void VeMultiThreadRecord::record(const std::function<void(VkCommandBuffer)>& rec
     }
 }
 
-void VeMultiThreadRecord::operator()(const std::function<void(VkCommandBuffer)>& recording_func)
+void VeMultiThreadCmdRecorder::operator()(const std::function<void(VkCommandBuffer)>& recording_func)
 {
     record(recording_func);
 }

@@ -517,9 +517,9 @@ int main(int argc, char** argv)
 
     VeGpuSemaphore image_semaphore;
     VeGpuSemaphore submit_semaphore;
+    VeGpuFence frame_fence;
     image_semaphore.create(device_layer);
     submit_semaphore.create(device_layer);
-    VeGpuFence frame_fence;
     frame_fence.create(device_layer, true);
 
     std::vector<VkFramebuffer> framebuffers(swapchain.image_views_.size());
@@ -548,8 +548,8 @@ int main(int argc, char** argv)
     VkRect2D scissor{};
     scissor.extent = swapchain.extend_;
 
-    VeMultiThreadRecord record0;
-    VeMultiThreadRecord record1;
+    VeMultiThreadCmdRecorder record0;
+    VeMultiThreadCmdRecorder record1;
     record0.create(device_layer);
     record1.create(device_layer);
 
@@ -678,8 +678,8 @@ int main(int argc, char** argv)
         vkDeviceWaitIdle(device_layer);
     }
     record0.terminate();
-    record_th0.join();
     record1.terminate();
+    record_th0.join();
     record_th1.join();
 
     record0.destroy(device_layer);
