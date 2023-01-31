@@ -26,16 +26,12 @@ class VeSemaphore
 
 struct VeGpuSemaphore : public MultiType<VkSemaphore>
 {
-    using MultiType<VkSemaphore>::operator=;
-
     void create(VkDevice device);
     void destroy(VkDevice device);
 };
 
 struct VeGpuFence : public MultiType<VkFence>
 {
-    using MultiType<VkFence>::operator=;
-
     void create(VkDevice device, bool signal);
     void destroy(VkDevice device);
 };

@@ -5,12 +5,8 @@
 #include "ve_base.hpp"
 #include "ve_device.hpp"
 
-class VeSingleTimeCmdBase : public MultiType<VkCommandPool, VkCommandBuffer>
+struct VeSingleTimeCmdBase : public MultiType<VkCommandPool, VkCommandBuffer>
 {
-  private:
-    using MultiType<VkCommandPool, VkCommandBuffer>::operator=;
-
-  public:
     void begin(VeDeviceLayer& device_layer);
     void end(VeDeviceLayer& device_layer);
 
