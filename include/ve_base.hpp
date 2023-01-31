@@ -17,9 +17,28 @@
 #include "defines.hpp"
 #include "vma.hpp"
 
+class VeCpuTimer
+{
+  private:
+    std::chrono::system_clock::time_point init;
+    std::chrono::system_clock::time_point begin;
+    std::chrono::system_clock::time_point end;
+
+  public:
+    VeCpuTimer();
+    float since_init_second();
+    uint32_t since_init_ms();
+
+    void start();
+    void finish();
+
+    float get_duration_second();
+    uint32_t get_duration_ms();
+};
+
 #ifdef VE_ENABLE_VALIDATION
 #define ATTRIB_ENABLE_VALIDATION true
-#else 
+#else
 #define ATTRIB_ENABLE_VALIDATION false
 #endif
 

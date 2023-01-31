@@ -34,7 +34,7 @@ class VeMesh
 
   public:
     const uint32_t MAX_INSTANCE;
-    uint32_t current_instance = 1;
+    uint32_t instance_count = 1;
     std::vector<glm::mat4> instances_{};
 
     VeMesh(const std::string file_path, uint32_t max_instance);

@@ -194,3 +194,40 @@ std::vector<char> read_file(const std::string& file_name, std::ios_base::openmod
 
     return buffer;
 }
+
+VeCpuTimer::VeCpuTimer()
+{
+    init = std::chrono::high_resolution_clock::now();
+}
+
+float VeCpuTimer::since_init_second()
+{
+    return std::chrono::duration<float, std::chrono::seconds::period> //
+        (std::chrono::high_resolution_clock::now() - init).count();
+}
+
+uint32_t VeCpuTimer::since_init_ms()
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds> //
+        (std::chrono::high_resolution_clock::now() - init).count();
+}
+
+void VeCpuTimer::start()
+{
+    begin = std::chrono::high_resolution_clock::now();
+}
+
+void VeCpuTimer::finish()
+{
+    end = std::chrono::high_resolution_clock::now();
+}
+
+float VeCpuTimer::get_duration_second()
+{
+    return std::chrono::duration<float, std::chrono::seconds::period>(begin - end).count();
+}
+
+uint32_t VeCpuTimer::get_duration_ms()
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
+}

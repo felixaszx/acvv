@@ -538,8 +538,6 @@ int main(int argc, char** argv)
         vkCreateFramebuffer(device_layer, &fcreate_info, nullptr, &framebuffers[i]);
     }
 
-    auto start = std::chrono::high_resolution_clock::now();
-
     VkViewport viewport{};
     viewport.width = casts(uint32_t, swapchain.extend_.width);
     viewport.height = casts(uint32_t, swapchain.extend_.height);
@@ -575,9 +573,12 @@ int main(int argc, char** argv)
                                ccc.draw(secondary_cmd);
                            });
 
+    VeCpuTimer timer;
+
     while (!glfwWindowShouldClose(base_layer))
     {
         glfwPollEvents();
+        ccc.instance_count = 1;
         ccc.update();
 
         auto result = vkWaitForFences(device_layer, 1, &frame_fence, VK_TRUE, UINT64_MAX);
@@ -589,11 +590,8 @@ int main(int argc, char** argv)
         vkAcquireNextImageKHR(device_layer, swapchain, UINT64_MAX, image_semaphore, VK_NULL_HANDLE, &image_index);
         vkResetFences(device_layer, 1, &frame_fence);
 
-        auto curr = std::chrono::high_resolution_clock::now();
-        float time = std::chrono::duration<float, std::chrono::seconds::period>(curr - start).count();
-        ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(1.0f * time), {0, 1, 0});
+        ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(1.0f * timer.since_init_second()), {0, 1, 0});
         memcpy(ubo_map, &ubo, sizeof(ubo));
-        ccc.current_instance = 1;
         std::fill(ccc.instances_.begin(), ccc.instances_.begin() + 1, ubo.model);
 
         VkDescriptorBufferInfo buffer_info{};

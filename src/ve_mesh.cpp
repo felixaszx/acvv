@@ -164,7 +164,7 @@ void VeMesh::draw(VkCommandBuffer cmd)
 
 void VeMesh::update()
 {
-    update_size = current_instance < MAX_INSTANCE ? current_instance : MAX_INSTANCE;
+    update_size = instance_count < MAX_INSTANCE ? instance_count : MAX_INSTANCE;
     memcpy(instance_mapping_, instances_.data(), update_size * sizeof(glm::mat4));
 }
 
