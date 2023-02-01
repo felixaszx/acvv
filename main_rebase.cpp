@@ -19,6 +19,19 @@ struct UniformBuffer
     glm::mat4 proj;
 };
 
+struct LightPushConstants
+{
+    glm::vec4 position;
+    glm::vec4 direction;
+
+    glm::vec4 color;
+
+    float strength;
+    float constant;
+    float linear;
+    float quadratic;
+};
+
 int main(int argc, char** argv)
 {
     VeBaseLayer base_layer(1920, 1080);
@@ -237,28 +250,144 @@ int main(int argc, char** argv)
     VeShaderBase vert_shader0;
     VeShaderBase vert_shader1;
     VeShaderBase vert_shader2;
-    vert_shader0.create(device_layer,                                       //
+    vert_shader0.create(device_layer,                                        //
                         read_file("res/shader/vert0.spv", std::ios::binary), //
                         "main", VK_SHADER_STAGE_VERTEX_BIT);
-    vert_shader1.create(device_layer,                                       //
+    vert_shader1.create(device_layer,                                        //
                         read_file("res/shader/vert1.spv", std::ios::binary), //
                         "main", VK_SHADER_STAGE_VERTEX_BIT);
-    vert_shader2.create(device_layer,                                       //
+    vert_shader2.create(device_layer,                                        //
                         read_file("res/shader/vert2.spv", std::ios::binary), //
                         "main", VK_SHADER_STAGE_VERTEX_BIT);
 
     VeShaderBase frag_shader0;
     VeShaderBase frag_shader1;
     VeShaderBase frag_shader2;
-    frag_shader0.create(device_layer,                                       //
+    frag_shader0.create(device_layer,                                        //
                         read_file("res/shader/frag0.spv", std::ios::binary), //
                         "main", VK_SHADER_STAGE_FRAGMENT_BIT);
-    frag_shader1.create(device_layer,                                       //
+    frag_shader1.create(device_layer,                                        //
                         read_file("res/shader/frag1.spv", std::ios::binary), //
                         "main", VK_SHADER_STAGE_FRAGMENT_BIT);
-    frag_shader2.create(device_layer,                                       //
+    frag_shader2.create(device_layer,                                        //
                         read_file("res/shader/frag2.spv", std::ios::binary), //
                         "main", VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    VkPipeline graphics_pipeline0;
+    VkPipeline graphics_pipeline1;
+    VkPipeline graphics_pipeline2;
+
+    // first pipeline
+    VkPipelineShaderStageCreateInfo shader_stages0[2]{vert_shader0, frag_shader0};
+
+    VkPipelineVertexInputStateCreateInfo vertex_input_info0{};
+    vertex_input_info0.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertex_input_info0.vertexBindingDescriptionCount = binding_description.size();
+    vertex_input_info0.pVertexBindingDescriptions = binding_description.data();
+    vertex_input_info0.vertexAttributeDescriptionCount = attribute_description.size();
+    vertex_input_info0.pVertexAttributeDescriptions = attribute_description.data();
+
+    VkPipelineInputAssemblyStateCreateInfo input_assembly{};
+    input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+    std::vector<VkDynamicState> dynamic_states = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+    VkPipelineDynamicStateCreateInfo dynamic_state{};
+    dynamic_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamic_state.dynamicStateCount = casts(uint32_t, dynamic_states.size());
+    dynamic_state.pDynamicStates = dynamic_states.data();
+
+    VkPipelineViewportStateCreateInfo viewport_state{};
+    viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewport_state.viewportCount = 1;
+    viewport_state.scissorCount = 1;
+
+    VkPipelineRasterizationStateCreateInfo rasterizer{};
+    rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizer.lineWidth = 1.0f;
+    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+
+    VkPipelineMultisampleStateCreateInfo multisample{};
+    multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+    VkPipelineColorBlendAttachmentState color_blend_attachments[3]{};
+    color_blend_attachments[0].colorWriteMask =
+        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    color_blend_attachments[1].colorWriteMask =
+        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    color_blend_attachments[2].colorWriteMask =
+        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+
+    VkPipelineColorBlendStateCreateInfo color_blending{};
+    color_blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    color_blending.attachmentCount = 3;
+    color_blending.pAttachments = color_blend_attachments;
+
+    VkPipelineDepthStencilStateCreateInfo depth_sentcil{};
+    depth_sentcil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depth_sentcil.depthTestEnable = VK_TRUE;
+    depth_sentcil.depthWriteEnable = VK_TRUE;
+    depth_sentcil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+    depth_sentcil.depthBoundsTestEnable = VK_FALSE;
+    depth_sentcil.stencilTestEnable = VK_FALSE;
+
+    VkGraphicsPipelineCreateInfo pipeline0_info{};
+    pipeline0_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipeline0_info.stageCount = 2;
+    pipeline0_info.pStages = shader_stages0;
+    pipeline0_info.pVertexInputState = &vertex_input_info0;
+    pipeline0_info.pInputAssemblyState = &input_assembly;
+    pipeline0_info.pViewportState = &viewport_state;
+    pipeline0_info.pRasterizationState = &rasterizer;
+    pipeline0_info.pMultisampleState = &multisample;
+    pipeline0_info.pColorBlendState = &color_blending;
+    pipeline0_info.pDynamicState = &dynamic_state;
+    pipeline0_info.pDepthStencilState = &depth_sentcil;
+    pipeline0_info.layout = pipeline_layouts[0];
+    pipeline0_info.renderPass = render_pass;
+    pipeline0_info.subpass = 0;
+    vkCreateGraphicsPipelines(device_layer, VK_NULL_HANDLE, 1, &pipeline0_info, nullptr, &graphics_pipeline0);
+
+    // second graphics pipeline
+    VkPipelineShaderStageCreateInfo shader_stages1[2]{vert_shader1, frag_shader1};
+    VkPipelineVertexInputStateCreateInfo vertex_input_info1{};
+    vertex_input_info1.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+    VkPipelineColorBlendAttachmentState color_blend_attachment1{};
+    color_blend_attachment1.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+    color_blend_attachment1.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+    color_blend_attachment1.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | //
+                                             VK_COLOR_COMPONENT_G_BIT | //
+                                             VK_COLOR_COMPONENT_B_BIT | //
+                                             VK_COLOR_COMPONENT_A_BIT;
+    VkPipelineColorBlendStateCreateInfo color_blend_info1{};
+    color_blend_info1.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    color_blend_info1.attachmentCount = 1;
+    color_blend_info1.pAttachments = &color_blend_attachment1;
+
+    VkPipelineDepthStencilStateCreateInfo depth_sentcil1{};
+    depth_sentcil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depth_sentcil.depthTestEnable = VK_FALSE;
+
+    VkGraphicsPipelineCreateInfo pipeline1_info{};
+    pipeline1_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipeline1_info.stageCount = 2;
+    pipeline1_info.pStages = shader_stages1;
+    pipeline1_info.pVertexInputState = &vertex_input_info1;
+    pipeline1_info.pInputAssemblyState = &input_assembly;
+    pipeline1_info.pViewportState = &viewport_state;
+    pipeline1_info.pRasterizationState = &rasterizer;
+    pipeline1_info.pMultisampleState = &multisample;
+    pipeline1_info.pColorBlendState = &color_blend_info1;
+    pipeline1_info.pDynamicState = &dynamic_state;
+    pipeline1_info.pDepthStencilState = &depth_sentcil1;
+    pipeline1_info.layout = pipeline_layouts[1];
+    pipeline1_info.renderPass = render_pass;
+    pipeline1_info.subpass = 1;
+    vkCreateGraphicsPipelines(device_layer, VK_NULL_HANDLE, 1, &pipeline1_info, nullptr, &graphics_pipeline1);
 
     vert_shader0.destroy(device_layer);
     vert_shader1.destroy(device_layer);
@@ -274,6 +403,9 @@ int main(int argc, char** argv)
 
     vmaUnmapMemory(device_layer, uniform_buffer);
     vmaDestroyBuffer(device_layer, uniform_buffer, uniform_buffer);
+
+    vkDestroyPipeline(device_layer, graphics_pipeline0, nullptr);
+    vkDestroyPipeline(device_layer, graphics_pipeline1, nullptr);
 
     for (uint32_t i = 0; i < 3; i++)
     {
