@@ -142,3 +142,44 @@ void VeMultiThreadCmdRecorder::operator()(const std::function<void(VkCommandBuff
 {
     record(recording_func);
 }
+
+void VeCommandPoolBase::create(VkDevice device, uint32_t family_index, VkCommandPoolCreateFlags flags)
+{
+    VkCommandPoolCreateInfo pool_info{};
+    pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    pool_info.queueFamilyIndex = family_index;
+    vkCreateCommandPool(device, &pool_info, nullptr, this->ptr());
+}
+
+void VeCommandPoolBase::destroy(VkDevice device)
+{
+    vkDestroyCommandPool(device, *this, nullptr);
+}
+
+VkCommandBuffer VeCommandPoolBase::allocate_buffer(VkDevice device, VkCommandBufferLevel level)
+{
+    VkCommandBufferAllocateInfo cmd_alloc_info{};
+    cmd_alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    cmd_alloc_info.commandPool = *this;
+    cmd_alloc_info.level = level;
+    cmd_alloc_info.commandBufferCount = 1;
+
+    VkCommandBuffer cmd;
+    vkAllocateCommandBuffers(device, &cmd_alloc_info, &cmd);
+    return cmd;
+}
+
+std::vector<VkCommandBuffer> VeCommandPoolBase::allocate_buffers(VkDevice device, uint32_t count,
+                                                                 VkCommandBufferLevel level)
+{
+    VkCommandBufferAllocateInfo cmd_alloc_info{};
+    cmd_alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    cmd_alloc_info.commandPool = *this;
+    cmd_alloc_info.level = level;
+    cmd_alloc_info.commandBufferCount = count;
+
+    std::vector<VkCommandBuffer> cmds(count);
+    vkAllocateCommandBuffers(device, &cmd_alloc_info, cmds.data());
+    return cmds;
+}

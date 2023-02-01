@@ -8,4 +8,5 @@ layout(input_attachment_index = 2, binding = 2) uniform subpassInput normal;
 
 void main()
 {
+    light_result = subpassLoad(normal);
 }

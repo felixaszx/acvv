@@ -46,6 +46,7 @@ int main(int argc, char** argv)
 
     VeMesh ccc("res/model/sponza/sponza.obj", 100);
     ccc.create(device_layer);
+    ccc.instance_count = 1;
 
     std::vector<VkExtent2D> extends(5, swapchain.extend_);
     std::vector<VkSampleCountFlagBits> samples(5, VK_SAMPLE_COUNT_1_BIT);
@@ -56,7 +57,7 @@ int main(int argc, char** argv)
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, //
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, //
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, //
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,                                       //
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, //
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT};
     std::vector<VkImageAspectFlags> aspects = {VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_ASPECT_COLOR_BIT, //
                                                VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_ASPECT_COLOR_BIT, //
@@ -330,7 +331,7 @@ int main(int argc, char** argv)
     depth_sentcil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     depth_sentcil.depthTestEnable = VK_TRUE;
     depth_sentcil.depthWriteEnable = VK_TRUE;
-    depth_sentcil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+    depth_sentcil.depthCompareOp = VK_COMPARE_OP_LESS;
     depth_sentcil.depthBoundsTestEnable = VK_FALSE;
     depth_sentcil.stencilTestEnable = VK_FALSE;
 
@@ -432,14 +433,231 @@ int main(int argc, char** argv)
     frag_shader1.destroy(device_layer);
     frag_shader2.destroy(device_layer);
 
+    VeCommandPoolBase cmd_pool;
+    cmd_pool.create(device_layer, device_layer.queue_family_indices.graphics,
+                    VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    VkCommandBuffer cmd = cmd_pool.allocate_buffer(device_layer, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+    VeGpuSemaphore image_semaphore;
+    VeGpuSemaphore submit_semaphore;
+    VeGpuFence frame_fence;
+    image_semaphore.create(device_layer);
+    submit_semaphore.create(device_layer);
+    frame_fence.create(device_layer, true);
+
+    std::vector<VkFramebuffer> framebuffers(swapchain.image_views_.size());
+    for (int i = 0; i < swapchain.image_views_.size(); i++)
+    {
+        VkImageView fattachments[] = {attachments[0], attachments[1], attachments[2],
+                                      attachments[3], attachments[4], swapchain.image_views_[i]};
+        VkFramebufferCreateInfo fcreate_info{};
+        fcreate_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        fcreate_info.renderPass = render_pass;
+        fcreate_info.attachmentCount = 6;
+        fcreate_info.pAttachments = fattachments;
+        fcreate_info.width = swapchain.extend_.width;
+        fcreate_info.height = swapchain.extend_.height;
+        fcreate_info.layers = 1;
+        vkCreateFramebuffer(device_layer, &fcreate_info, nullptr, &framebuffers[i]);
+    }
+
+    VkViewport viewport{};
+    viewport.width = casts(uint32_t, swapchain.extend_.width);
+    viewport.height = casts(uint32_t, swapchain.extend_.height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    VkRect2D scissor{};
+    scissor.extent = swapchain.extend_;
+
+    for (int i = 0; i < 3; i++)
+    {
+        VkDescriptorImageInfo descriptor_image_info{};
+        descriptor_image_info.sampler = VK_NULL_HANDLE;
+        descriptor_image_info.imageView = attachments[i];
+        descriptor_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        VkWriteDescriptorSet image_write{};
+        image_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        image_write.dstSet = descriptor_sets[1];
+        image_write.dstBinding = i;
+        image_write.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+        image_write.descriptorCount = 1;
+        image_write.pImageInfo = &descriptor_image_info;
+        vkUpdateDescriptorSets(device_layer, 1, &image_write, 0, nullptr);
+    }
+    VkDescriptorImageInfo descriptor_image_info{};
+    descriptor_image_info.sampler = VK_NULL_HANDLE;
+    descriptor_image_info.imageView = attachments[3];
+    descriptor_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    VkWriteDescriptorSet image_write{};
+    image_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    image_write.dstSet = descriptor_sets[2];
+    image_write.dstBinding = 0;
+    image_write.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+    image_write.descriptorCount = 1;
+    image_write.pImageInfo = &descriptor_image_info;
+    vkUpdateDescriptorSets(device_layer, 1, &image_write, 0, nullptr);
+
+    VeMultiThreadCmdRecorder record0;
+    VeMultiThreadCmdRecorder record1;
+    VeMultiThreadCmdRecorder record2;
+    record0.create(device_layer);
+    record1.create(device_layer);
+    record2.create(device_layer);
+
+    std::thread record_th0(std::ref(record0),
+                           [&](VkCommandBuffer secondary_cmd)
+                           {
+                               vkCmdBindPipeline(secondary_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline0);
+                               vkCmdSetViewport(secondary_cmd, 0, 1, &viewport);
+                               vkCmdSetScissor(secondary_cmd, 0, 1, &scissor);
+                               vkCmdBindDescriptorSets(secondary_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                                       pipeline_layouts[0], 0, 1, descriptor_sets, 0, nullptr);
+                               ccc.draw(secondary_cmd);
+                           });
+
+    std::thread record_th1(std::ref(record1),
+                           [&](VkCommandBuffer secondary_cmd)
+                           {
+                               vkCmdBindPipeline(secondary_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline1);
+                               vkCmdSetViewport(secondary_cmd, 0, 1, &viewport);
+                               vkCmdSetScissor(secondary_cmd, 0, 1, &scissor);
+                               vkCmdBindDescriptorSets(secondary_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                                       pipeline_layouts[1], 0, 1, descriptor_sets + 1, 0, nullptr);
+                               vkCmdDraw(secondary_cmd, 6, 1, 0, 0);
+                           });
+
+    std::thread record_th2(std::ref(record2),
+                           [&](VkCommandBuffer secondary_cmd)
+                           {
+                               vkCmdBindPipeline(secondary_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline2);
+                               vkCmdSetViewport(secondary_cmd, 0, 1, &viewport);
+                               vkCmdSetScissor(secondary_cmd, 0, 1, &scissor);
+                               vkCmdBindDescriptorSets(secondary_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                                       pipeline_layouts[2], 0, 1, descriptor_sets + 2, 0, nullptr);
+                               vkCmdDraw(secondary_cmd, 6, 1, 0, 0);
+                           });
+
+    // main loop
+    VeCpuTimer timer;
     while (!glfwWindowShouldClose(base_layer))
     {
         glfwPollEvents();
+        ccc.update();
+
+        auto result = vkWaitForFences(device_layer, 1, &frame_fence, VK_TRUE, UINT64_MAX);
+        if (result != VK_SUCCESS)
+        {
+            throw std::runtime_error("Fence error\n");
+        }
+        uint32_t image_index = 0;
+        vkAcquireNextImageKHR(device_layer, swapchain, UINT64_MAX, image_semaphore, VK_NULL_HANDLE, &image_index);
+        vkResetFences(device_layer, 1, &frame_fence);
+
+        ccc.instances_[0] = glm::rotate(glm::mat4(1.0f), glm::radians(1.0f * timer.since_init_second()), {0, 1, 0});
+        memcpy(ubo_map, &ubo, sizeof(ubo));
+
+        VkDescriptorBufferInfo buffer_info{};
+        buffer_info.buffer = uniform_buffer;
+        buffer_info.offset = 0;
+        buffer_info.range = VK_WHOLE_SIZE;
+        VkWriteDescriptorSet write{};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet = descriptor_sets[0];
+        write.dstBinding = 0;
+        write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        write.descriptorCount = 1;
+        write.pBufferInfo = &buffer_info;
+        vkUpdateDescriptorSets(device_layer, 1, &write, 0, nullptr);
+
+        VkCommandBufferInheritanceInfo iifo{};
+        iifo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
+        iifo.renderPass = render_pass;
+        iifo.subpass = 0;
+        iifo.framebuffer = framebuffers[image_index];
+        record0.begin(iifo);
+        iifo.subpass = 1;
+        record1.begin(iifo);
+        iifo.subpass = 2;
+        record2.begin(iifo);
+
+        vkResetCommandBuffer(cmd, 0);
+        VkCommandBufferBeginInfo begin_info{};
+        begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        vkBeginCommandBuffer(cmd, &begin_info);
+        VkClearValue clear_value[6];
+        clear_value[0] = {{0.0f, 0.0f, 0.0f, 1.0f}};
+        clear_value[1] = {{0.0f, 0.0f, 0.0f, 1.0f}};
+        clear_value[2] = {{0.0f, 0.0f, 0.0f, 1.0f}};
+        clear_value[3] = {{0.0f, 0.0f, 0.0f, 1.0f}};
+        clear_value[4] = {{1.0f, 0.0f}};
+        clear_value[5] = {{0.0f, 0.0f, 0.0f, 1.0f}};
+        VkRenderPassBeginInfo render_pass_info{};
+        render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        render_pass_info.renderPass = render_pass;
+        render_pass_info.framebuffer = framebuffers[image_index];
+        render_pass_info.renderArea.extent = swapchain.extend_;
+        render_pass_info.clearValueCount = 6;
+        render_pass_info.pClearValues = clear_value;
+
+        vkCmdBeginRenderPass(cmd, &render_pass_info, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+        record0.wait_than_excute(cmd);
+
+        vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+        record1.wait_than_excute(cmd);
+
+        vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+        record2.wait_than_excute(cmd);
+
+        vkCmdEndRenderPass(cmd);
+        vkEndCommandBuffer(cmd);
+
+        VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+        VkSubmitInfo submit_info{};
+        submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submit_info.waitSemaphoreCount = 1;
+        submit_info.pWaitSemaphores = &image_semaphore;
+        submit_info.pWaitDstStageMask = wait_stages;
+        submit_info.commandBufferCount = 1;
+        submit_info.pCommandBuffers = &cmd;
+        submit_info.signalSemaphoreCount = 1;
+        submit_info.pSignalSemaphores = &submit_semaphore;
+        vkQueueSubmit(device_layer.graphics_queue_, 1, &submit_info, frame_fence);
+
+        VkPresentInfoKHR present_info{};
+        present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        present_info.waitSemaphoreCount = 1;
+        present_info.pWaitSemaphores = &submit_semaphore;
+        present_info.swapchainCount = 1;
+        present_info.pSwapchains = &swapchain;
+        present_info.pImageIndices = &image_index;
+
+        vkQueuePresentKHR(device_layer.present_queue_, &present_info);
+
+        vkDeviceWaitIdle(device_layer);
     }
+
+    record0.terminate();
+    record1.terminate();
+    record2.terminate();
+    record_th0.join();
+    record_th1.join();
+    record_th2.join();
+    record0.destroy(device_layer);
+    record1.destroy(device_layer);
+    record2.destroy(device_layer);
 
     vmaUnmapMemory(device_layer, uniform_buffer);
     vmaDestroyBuffer(device_layer, uniform_buffer, uniform_buffer);
 
+    for (auto framebuffer : framebuffers)
+    {
+        vkDestroyFramebuffer(device_layer, framebuffer, nullptr);
+    }
+
+    cmd_pool.destroy(device_layer);
+    image_semaphore.destroy(device_layer);
+    submit_semaphore.destroy(device_layer);
+    frame_fence.destroy(device_layer);
     vkDestroyPipeline(device_layer, graphics_pipeline0, nullptr);
     vkDestroyPipeline(device_layer, graphics_pipeline1, nullptr);
     vkDestroyPipeline(device_layer, graphics_pipeline2, nullptr);

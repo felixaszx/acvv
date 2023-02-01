@@ -14,6 +14,15 @@ struct VeSingleTimeCmdBase : public MultiType<VkCommandPool, VkCommandBuffer>
     void end(VeDeviceLayer& device_layer, VkCommandPool pool);
 };
 
+struct VeCommandPoolBase : public MultiType<VkCommandPool>
+{
+    void create(VkDevice device, uint32_t family_index, VkCommandPoolCreateFlags flags);
+    void destroy(VkDevice device);
+
+    VkCommandBuffer allocate_buffer(VkDevice device, VkCommandBufferLevel level);
+    std::vector<VkCommandBuffer> allocate_buffers(VkDevice device, uint32_t count, VkCommandBufferLevel level);
+};
+
 class VeMultiThreadCmdRecorder
 {
   private:
