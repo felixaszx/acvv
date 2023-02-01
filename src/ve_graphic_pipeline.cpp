@@ -9,16 +9,17 @@ void VeShaderBase::create(VkDevice device, const std::vector<char>& shader_code,
     module_info.pCode = castr(const uint32_t*, shader_code.data());
     vkCreateShaderModule(device, &module_info, nullptr, ptr());
 
-    auto& stage_info = data<VkPipelineShaderStageCreateInfo>();
+    entry_point = entry_name;
     stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     stage_info.stage = stage;
     stage_info.module = *this;
-    stage_info.pName = entry_name.data();
+    stage_info.pName = entry_point.data();
 }
 
 void VeShaderBase::destroy(VkDevice device)
 {
     vkDestroyShaderModule(device, *this, nullptr);
+    stage_info = {};
 }
 
 std::vector<VeImageBase> creat_image_attachments(VeDeviceLayer device_layer, const std::vector<VkFormat>& formats, //

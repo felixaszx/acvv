@@ -279,7 +279,7 @@ int main(int argc, char** argv)
     VkPipeline graphics_pipeline2;
 
     // first pipeline
-    VkPipelineShaderStageCreateInfo shader_stages0[2]{vert_shader0, frag_shader0};
+    VkPipelineShaderStageCreateInfo shader_stages0[2]{vert_shader0.stage_info, frag_shader0.stage_info};
 
     VkPipelineVertexInputStateCreateInfo vertex_input_info0{};
     vertex_input_info0.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -353,7 +353,7 @@ int main(int argc, char** argv)
     vkCreateGraphicsPipelines(device_layer, VK_NULL_HANDLE, 1, &pipeline0_info, nullptr, &graphics_pipeline0);
 
     // second graphics pipeline
-    VkPipelineShaderStageCreateInfo shader_stages1[2]{vert_shader1, frag_shader1};
+    VkPipelineShaderStageCreateInfo shader_stages1[2]{vert_shader1.stage_info, frag_shader1.stage_info};
     VkPipelineVertexInputStateCreateInfo vertex_input_info1{};
     vertex_input_info1.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
@@ -391,7 +391,7 @@ int main(int argc, char** argv)
     vkCreateGraphicsPipelines(device_layer, VK_NULL_HANDLE, 1, &pipeline1_info, nullptr, &graphics_pipeline1);
 
     // third graphics pipeline
-    VkPipelineShaderStageCreateInfo shader_stages2[2]{vert_shader2, frag_shader2};
+    VkPipelineShaderStageCreateInfo shader_stages2[2]{vert_shader2.stage_info, frag_shader2.stage_info};
     VkPipelineVertexInputStateCreateInfo vertex_input_info2{};
     vertex_input_info2.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
