@@ -17,7 +17,9 @@ struct VeShaderBase : public VeShaderModuleStage
 std::vector<VeImageBase> creat_image_attachments(VeDeviceLayer device_layer, const std::vector<VkFormat>& formats, //
                                                  const std::vector<VkExtent2D>& extends,                           //
                                                  const std::vector<VkSampleCountFlagBits>& samples,                //
-                                                 const std::vector<VkImageUsageFlags>& usages,//
+                                                 const std::vector<VkImageUsageFlags>& usages,                     //
                                                  const std::vector<VkImageAspectFlags>& aspects);
+                                                 
+void destroy_image_attachments(VeDeviceLayer device_layer, std::vector<VeImageBase> attachments);
 
 #endif // VE_GRAPHIC_PIPELINE_HPP

@@ -65,3 +65,12 @@ std::vector<VeImageBase> creat_image_attachments(VeDeviceLayer device_layer, con
 
     return attachments;
 }
+
+void destroy_image_attachments(VeDeviceLayer device_layer, std::vector<VeImageBase> attachments)
+{
+    for (uint32_t i = 0; i < attachments.size(); i++)
+    {
+        vkDestroyImageView(device_layer, attachments[i], nullptr);
+        vmaDestroyImage(device_layer, attachments[i], attachments[i]);
+    }
+}
