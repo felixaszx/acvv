@@ -358,6 +358,8 @@ int main(int argc, char** argv)
     vertex_input_info1.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
     VkPipelineColorBlendAttachmentState color_blend_attachment1{};
+    color_blend_attachment1.blendEnable = VK_TRUE;
+    color_blend_attachment1.colorBlendOp = VK_BLEND_OP_ADD;
     color_blend_attachment1.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
     color_blend_attachment1.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
     color_blend_attachment1.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | //
