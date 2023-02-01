@@ -369,8 +369,8 @@ int main(int argc, char** argv)
     color_blend_info1.pAttachments = &color_blend_attachment1;
 
     VkPipelineDepthStencilStateCreateInfo depth_sentcil1{};
-    depth_sentcil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depth_sentcil.depthTestEnable = VK_FALSE;
+    depth_sentcil1.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depth_sentcil1.depthTestEnable = VK_FALSE;
 
     VkGraphicsPipelineCreateInfo pipeline1_info{};
     pipeline1_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -389,6 +389,42 @@ int main(int argc, char** argv)
     pipeline1_info.subpass = 1;
     vkCreateGraphicsPipelines(device_layer, VK_NULL_HANDLE, 1, &pipeline1_info, nullptr, &graphics_pipeline1);
 
+    // third graphics pipeline
+    VkPipelineShaderStageCreateInfo shader_stages2[2]{vert_shader2, frag_shader2};
+    VkPipelineVertexInputStateCreateInfo vertex_input_info2{};
+    vertex_input_info2.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+    VkPipelineColorBlendAttachmentState color_blend_attachment2{};
+    color_blend_attachment2.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | //
+                                             VK_COLOR_COMPONENT_G_BIT | //
+                                             VK_COLOR_COMPONENT_B_BIT | //
+                                             VK_COLOR_COMPONENT_A_BIT;
+    VkPipelineColorBlendStateCreateInfo color_blend_info2{};
+    color_blend_info2.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    color_blend_info2.attachmentCount = 1;
+    color_blend_info2.pAttachments = &color_blend_attachment2;
+
+    VkPipelineDepthStencilStateCreateInfo depth_sentcil2{};
+    depth_sentcil2.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depth_sentcil2.depthTestEnable = VK_FALSE;
+
+    VkGraphicsPipelineCreateInfo pipeline2_info{};
+    pipeline2_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipeline2_info.stageCount = 2;
+    pipeline2_info.pStages = shader_stages2;
+    pipeline2_info.pVertexInputState = &vertex_input_info2;
+    pipeline2_info.pInputAssemblyState = &input_assembly;
+    pipeline2_info.pViewportState = &viewport_state;
+    pipeline2_info.pRasterizationState = &rasterizer;
+    pipeline2_info.pMultisampleState = &multisample;
+    pipeline2_info.pColorBlendState = &color_blend_info2;
+    pipeline2_info.pDynamicState = &dynamic_state;
+    pipeline2_info.pDepthStencilState = &depth_sentcil2;
+    pipeline2_info.layout = pipeline_layouts[2];
+    pipeline2_info.renderPass = render_pass;
+    pipeline2_info.subpass = 2;
+    vkCreateGraphicsPipelines(device_layer, VK_NULL_HANDLE, 1, &pipeline2_info, nullptr, &graphics_pipeline2);
+
     vert_shader0.destroy(device_layer);
     vert_shader1.destroy(device_layer);
     vert_shader2.destroy(device_layer);
@@ -406,6 +442,7 @@ int main(int argc, char** argv)
 
     vkDestroyPipeline(device_layer, graphics_pipeline0, nullptr);
     vkDestroyPipeline(device_layer, graphics_pipeline1, nullptr);
+    vkDestroyPipeline(device_layer, graphics_pipeline2, nullptr);
 
     for (uint32_t i = 0; i < 3; i++)
     {
