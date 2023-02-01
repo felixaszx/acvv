@@ -207,28 +207,86 @@ int main(int argc, char** argv)
     pool_sizes[1].type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
     pool_sizes[2].descriptorCount = 1;
     pool_sizes[2].type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-    VkDescriptorPoolCreateInfo pool_create_infos[3]{};
-    pool_create_infos[0].sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    pool_create_infos[0].pPoolSizes = pool_sizes + 0;
-    pool_create_infos[0].poolSizeCount = 1;
-    pool_create_infos[0].maxSets = 1;
-    pool_create_infos[1].sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    pool_create_infos[1].pPoolSizes = pool_sizes + 1;
-    pool_create_infos[1].poolSizeCount = 1;
-    pool_create_infos[1].maxSets = 1;
-    pool_create_infos[2].sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    pool_create_infos[2].pPoolSizes = pool_sizes + 2;
-    pool_create_infos[2].poolSizeCount = 1;
-    pool_create_infos[2].maxSets = 1;
+
+    for (uint32_t i = 0; i < 3; i++)
+    {
+        VkDescriptorPoolCreateInfo pool_create_info{};
+        pool_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        pool_create_info.pPoolSizes = pool_sizes + i;
+        pool_create_info.poolSizeCount = 1;
+        pool_create_info.maxSets = 1;
+        vkCreateDescriptorPool(device_layer, &pool_create_info, nullptr, descriptor_pools + i);
+
+        VkDescriptorSetAllocateInfo set_alloc_info{};
+        set_alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        set_alloc_info.descriptorPool = descriptor_pools[i];
+        set_alloc_info.descriptorSetCount = 1;
+        set_alloc_info.pSetLayouts = set_layouts + i;
+        vkAllocateDescriptorSets(device_layer, &set_alloc_info, descriptor_sets + i);
+
+        VkPipelineLayoutCreateInfo pipeline_layout_info{};
+        pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipeline_layout_info.setLayoutCount = 1;
+        pipeline_layout_info.pSetLayouts = set_layouts + i;
+        vkCreatePipelineLayout(device_layer, &pipeline_layout_info, nullptr, pipeline_layouts + i);
+    }
+
+    auto binding_description = VeMesh::get_bindings();
+    auto attribute_description = VeMesh::get_attributes();
+
+    VeShaderBase vert_shader0;
+    VeShaderBase vert_shader1;
+    VeShaderBase vert_shader2;
+    vert_shader0.create(device_layer,                                       //
+                        read_file("res/shader/vert0.spv", std::ios::binary), //
+                        "main", VK_SHADER_STAGE_VERTEX_BIT);
+    vert_shader1.create(device_layer,                                       //
+                        read_file("res/shader/vert1.spv", std::ios::binary), //
+                        "main", VK_SHADER_STAGE_VERTEX_BIT);
+    vert_shader2.create(device_layer,                                       //
+                        read_file("res/shader/vert2.spv", std::ios::binary), //
+                        "main", VK_SHADER_STAGE_VERTEX_BIT);
+
+    VeShaderBase frag_shader0;
+    VeShaderBase frag_shader1;
+    VeShaderBase frag_shader2;
+    frag_shader0.create(device_layer,                                       //
+                        read_file("res/shader/frag0.spv", std::ios::binary), //
+                        "main", VK_SHADER_STAGE_FRAGMENT_BIT);
+    frag_shader1.create(device_layer,                                       //
+                        read_file("res/shader/frag1.spv", std::ios::binary), //
+                        "main", VK_SHADER_STAGE_FRAGMENT_BIT);
+    frag_shader2.create(device_layer,                                       //
+                        read_file("res/shader/frag2.spv", std::ios::binary), //
+                        "main", VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    vert_shader0.destroy(device_layer);
+    vert_shader1.destroy(device_layer);
+    vert_shader2.destroy(device_layer);
+    frag_shader0.destroy(device_layer);
+    frag_shader1.destroy(device_layer);
+    frag_shader2.destroy(device_layer);
 
     while (!glfwWindowShouldClose(base_layer))
     {
         glfwPollEvents();
     }
 
+    vmaUnmapMemory(device_layer, uniform_buffer);
+    vmaDestroyBuffer(device_layer, uniform_buffer, uniform_buffer);
+
+    for (uint32_t i = 0; i < 3; i++)
+    {
+        vkDestroyDescriptorPool(device_layer, descriptor_pools[i], nullptr);
+        vkDestroyDescriptorSetLayout(device_layer, set_layouts[i], nullptr);
+        vkDestroyPipelineLayout(device_layer, pipeline_layouts[i], nullptr);
+    }
+
     destroy_image_attachments(device_layer, attachments);
     vkDestroyRenderPass(device_layer, render_pass, nullptr);
+
     ccc.destroy(device_layer);
+
     swapchain.destroy(device_layer);
     device_layer.destroy();
     base_layer.destroy();
