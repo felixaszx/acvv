@@ -163,6 +163,64 @@ int main(int argc, char** argv)
     vmaCreateBuffer(device_layer, &ubo_info, &ubo_alloc_info, &uniform_buffer, &uniform_buffer, nullptr);
     vmaMapMemory(device_layer, uniform_buffer, &ubo_map);
 
+    VkDescriptorSetLayout set_layouts[3]{};
+    VkDescriptorSet descriptor_sets[3]{};
+    VkDescriptorPool descriptor_pools[3]{};
+    VkPipelineLayout pipeline_layouts[3]{};
+
+    VkDescriptorSetLayoutBinding bindings[5]{};
+    bindings[0].binding = 0;
+    bindings[0].descriptorCount = 1;
+    bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    bindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    for (int i = 1; i < 4; i++)
+    {
+        bindings[i].binding = i - 1;
+        bindings[i].descriptorCount = 1;
+        bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+        bindings[i].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    }
+    bindings[4].binding = 0;
+    bindings[4].descriptorCount = 1;
+    bindings[4].descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+    bindings[4].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    VkDescriptorSetLayoutCreateInfo set_layout_create_infos[3]{};
+    set_layout_create_infos[0].sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    set_layout_create_infos[0].bindingCount = 1;
+    set_layout_create_infos[0].pBindings = bindings + 0;
+    set_layout_create_infos[1].sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    set_layout_create_infos[1].bindingCount = 3;
+    set_layout_create_infos[1].pBindings = bindings + 1;
+    set_layout_create_infos[2].sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    set_layout_create_infos[2].bindingCount = 1;
+    set_layout_create_infos[2].pBindings = bindings + 4;
+    for (uint32_t i = 0; i < 3; i++)
+    {
+        vkCreateDescriptorSetLayout(device_layer, set_layout_create_infos + i, nullptr, set_layouts + i);
+    }
+
+    VkDescriptorPoolSize pool_sizes[3]{};
+    pool_sizes[0].descriptorCount = 1;
+    pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    pool_sizes[1].descriptorCount = 3;
+    pool_sizes[1].type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+    pool_sizes[2].descriptorCount = 1;
+    pool_sizes[2].type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+    VkDescriptorPoolCreateInfo pool_create_infos[3]{};
+    pool_create_infos[0].sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    pool_create_infos[0].pPoolSizes = pool_sizes + 0;
+    pool_create_infos[0].poolSizeCount = 1;
+    pool_create_infos[0].maxSets = 1;
+    pool_create_infos[1].sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    pool_create_infos[1].pPoolSizes = pool_sizes + 1;
+    pool_create_infos[1].poolSizeCount = 1;
+    pool_create_infos[1].maxSets = 1;
+    pool_create_infos[2].sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    pool_create_infos[2].pPoolSizes = pool_sizes + 2;
+    pool_create_infos[2].poolSizeCount = 1;
+    pool_create_infos[2].maxSets = 1;
+
     while (!glfwWindowShouldClose(base_layer))
     {
         glfwPollEvents();
