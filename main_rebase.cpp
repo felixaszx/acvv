@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#define VE_ENABLE_VALIDATION
+#define VE_ENABLE_VALIDATIONs
 #include "ve_base.hpp"
 #include "ve_device.hpp"
 #include "ve_image.hpp"
@@ -23,10 +23,10 @@ struct LightPushConstants
 {
     glm::vec4 position;
     glm::vec4 direction;
-
     glm::vec4 color;
-
+    glm::vec4 camera_pos;
     float strength;
+
     float constant;
     float linear;
     float quadratic;
@@ -158,7 +158,7 @@ int main(int argc, char** argv)
     vkCreateRenderPass(device_layer, &render_pass_info, nullptr, &render_pass);
 
     UniformBuffer ubo{};
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 40.0f, 2.0f), glm::vec3(2.0f, 40.0f, 2.0f) + glm::vec3(0.0f, 0.0f, 1.0f),
+    ubo.view = glm::lookAt(glm::vec3(0.0f, 80.0f, 0.0f), glm::vec3(0.0f, 80.0f, 0.0f) + glm::vec3(0.0f, 0.0f, 1.0f),
                            glm::vec3(0.0f, 1.0f, 0.0f));
     ubo.proj = glm::perspective(glm::radians(45.0f),                                       //
                                 swapchain.extend_.width / (float)swapchain.extend_.height, //
@@ -222,6 +222,11 @@ int main(int argc, char** argv)
     pool_sizes[2].descriptorCount = 1;
     pool_sizes[2].type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
 
+    VkPushConstantRange push_range{};
+    push_range.offset = 0;
+    push_range.size = sizeof(LightPushConstants);
+    push_range.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
     for (uint32_t i = 0; i < 3; i++)
     {
         VkDescriptorPoolCreateInfo pool_create_info{};
@@ -242,6 +247,11 @@ int main(int argc, char** argv)
         pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipeline_layout_info.setLayoutCount = 1;
         pipeline_layout_info.pSetLayouts = set_layouts + i;
+        if (i == 1)
+        {
+            pipeline_layout_info.pushConstantRangeCount = 1;
+            pipeline_layout_info.pPushConstantRanges = &push_range;
+        }
         vkCreatePipelineLayout(device_layer, &pipeline_layout_info, nullptr, pipeline_layouts + i);
     }
 
@@ -499,6 +509,15 @@ int main(int argc, char** argv)
     image_write.pImageInfo = &descriptor_image_info;
     vkUpdateDescriptorSets(device_layer, 1, &image_write, 0, nullptr);
 
+    LightPushConstants light_data{};
+    light_data.camera_pos = glm::vec4(0.0f, 80.0f, 0.0f, 1.0f);
+    light_data.color = glm::vec4(1, 1, 1, 1);
+    light_data.position = glm::vec4(0, 10, 0, 1);
+    light_data.strength = 100.0f;
+    light_data.constant = 1;
+    light_data.linear = 0.09;
+    light_data.quadratic = 0.032;
+
     VeMultiThreadCmdRecorder record0;
     VeMultiThreadCmdRecorder record1;
     VeMultiThreadCmdRecorder record2;
@@ -525,6 +544,8 @@ int main(int argc, char** argv)
                                vkCmdSetScissor(secondary_cmd, 0, 1, &scissor);
                                vkCmdBindDescriptorSets(secondary_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
                                                        pipeline_layouts[1], 0, 1, descriptor_sets + 1, 0, nullptr);
+                               vkCmdPushConstants(secondary_cmd, pipeline_layouts[1], VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+                                                  sizeof(light_data), &light_data);
                                vkCmdDraw(secondary_cmd, 6, 1, 0, 0);
                            });
 
@@ -555,7 +576,7 @@ int main(int argc, char** argv)
         vkAcquireNextImageKHR(device_layer, swapchain, UINT64_MAX, image_semaphore, VK_NULL_HANDLE, &image_index);
         vkResetFences(device_layer, 1, &frame_fence);
 
-        ccc.instances_[0] = glm::rotate(glm::mat4(1.0f), glm::radians(1.0f * timer.since_init_second()), {0, 1, 0});
+        ccc.instances_[0] = glm::rotate(glm::mat4(1.0f), glm::radians(5.0f * timer.since_init_second()), {0, 1, 0});
         memcpy(ubo_map, &ubo, sizeof(ubo));
 
         VkDescriptorBufferInfo buffer_info{};
