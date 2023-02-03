@@ -52,6 +52,7 @@
             "type": "cmake",
             "label": "CMake: build",
             "command": "build",
+            "dependsOrder": "sequence",
             "dependsOn": [
                 "CMake: configure",
                 "glslc"
@@ -70,6 +71,62 @@
                 "showReuseMessage": false,
                 "clear": false
             }
+        },
+        {
+            "type": "shell",
+            "label": "add dlls info",
+            "detail": "add dlls info",
+            "command": "echo ldd \"${command:cmake.getLaunchTargetPath}\" ^| grep ucrt64 ^| awk '{print $3}' ^| xargs -i cp {} \"${command:cmake.getLaunchTargetDirectory}\" > ${command:cmake.getLaunchTargetDirectory}/dlls_info.txt",
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false,
+            }
+        },
+        {
+            "type": "shell",
+            "label": "copy dlls",
+            "detail": "copy dlls",
+            "command": "msys2 -ucrt64 < ${command:cmake.getLaunchTargetDirectory}/dlls_info.txt",
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false,
+            }
+        },
+        {
+            "type": "shell",
+            "label": "Build and copy",
+            "detail": "Build and copy",
+            "command": "",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "CMake: configure",
+                "glslc",
+                "CMake: build",
+                "add dlls info",
+                "copy dlls"
+            ]
+        },
+        {
+            "type": "shell",
+            "label": "Build",
+            "detail": "Build ",
+            "command": "",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "CMake: configure",
+                "glslc",
+                "CMake: build"
+            ]
         }
     ]
 }
