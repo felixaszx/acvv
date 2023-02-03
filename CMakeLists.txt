@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS off)
 
 file(GLOB_RECURSE SRC_CPP src/*.cpp src_app/*.cpp)
-add_executable(acvv main_rebase.cpp ${SRC_CPP})
+add_executable(acvv main.cpp ${SRC_CPP})
 
 # includes-cpp
 target_include_directories(acvv PUBLIC include)
