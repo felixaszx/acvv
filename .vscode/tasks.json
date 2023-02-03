@@ -19,21 +19,6 @@
             }
         },
         {
-            "type": "shell",
-            "label": "glslc",
-            "detail": "Compile vulkan shaders",
-            "command": "${workspaceFolder}/res/shader/shader.bat",
-            "problemMatcher": [],
-            "presentation": {
-                "echo": true,
-                "reveal": "silent",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": false,
-            }
-        },
-        {
             "type": "cmake",
             "label": "CMake: configure",
             "command": "configure",
@@ -52,11 +37,6 @@
             "type": "cmake",
             "label": "CMake: build",
             "command": "build",
-            "dependsOrder": "sequence",
-            "dependsOn": [
-                "CMake: configure",
-                "glslc"
-            ],
             "targets": [
                 "all"
             ],
@@ -92,6 +72,21 @@
             "label": "copy dlls",
             "detail": "copy dlls",
             "command": "msys2 -ucrt64 < ${command:cmake.getLaunchTargetDirectory}/dlls_info.txt",
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false,
+            }
+        },
+        {
+            "type": "shell",
+            "label": "glslc",
+            "detail": "Compile vulkan shaders",
+            "command": "${workspaceFolder}/res/shader/shader.bat",
             "problemMatcher": [],
             "presentation": {
                 "echo": true,
