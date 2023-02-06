@@ -6,14 +6,17 @@
 VeImagePixels load_pixel(const std::string file_name, uint32_t channel)
 {
     VeImagePixels image_pixels{};
+    int w, h, chan;
 
-    image_pixels.pixels =
-        stbi_load("res/texture.jpg", &image_pixels.width, &image_pixels.height, &image_pixels.channel, channel);
+    image_pixels.pixels = stbi_load("res/texture.jpg", &w, &h, &chan, channel);
     if (image_pixels.pixels == nullptr)
     {
         return VeImagePixels();
     }
     image_pixels.size = image_pixels.width * image_pixels.height * channel;
+    image_pixels.width = casts(uint32_t, w);
+    image_pixels.height = casts(uint32_t, h);
+    image_pixels.channel = casts(uint32_t, chan);
 
     return image_pixels;
 }
@@ -21,5 +24,83 @@ VeImagePixels load_pixel(const std::string file_name, uint32_t channel)
 void free_pixel(VeImagePixels& pixel_data)
 {
     stbi_image_free(pixel_data.pixels);
-    pixel_data = VeImagePixels();
+    pixel_data.pixels = nullptr;
+}
+
+void VeTextureBase::copy_buffer_to_image(VeDeviceLayer device_layer, VkCommandPool pool)
+{
+}
+
+void VeTextureBase::transit_to_dst(VeDeviceLayer device_layer, VkCommandPool pool)
+{
+    VeSingleTimeCmdBase cmd;
+    cmd.begin(device_layer, pool);
+
+    VkImageMemoryBarrier barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+    barrier.image = *this;
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+
+    vkCmdPipelineBarrier(cmd, 0 /* TODO */, 0 /* TODO */, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+}
+
+void VeTextureBase::transit_to_shader(VeDeviceLayer device_layer, VkCommandPool pool)
+{
+}
+
+VeTextureBase::VeTextureBase(const std::string& file_name)
+{
+    pixels_data = load_pixel(file_name, STBI_rgb_alpha);
+}
+
+void VeTextureBase::create(VeDeviceLayer device_layer, VkCommandPool pool)
+{
+    VkImageCreateInfo image_info{};
+    image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    image_info.imageType = VK_IMAGE_TYPE_2D;
+    image_info.extent.width = pixels_data.width;
+    image_info.extent.height = pixels_data.height;
+    image_info.extent.depth = 1;
+    image_info.mipLevels = 1;
+    image_info.arrayLayers = 1;
+    image_info.format = VK_FORMAT_R8G8B8A8_SRGB;
+    image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    image_info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    image_info.samples = VK_SAMPLE_COUNT_1_BIT;
+    VmaAllocationCreateInfo alloc_info{};
+    alloc_info.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+    vmaCreateImage(device_layer, &image_info, &alloc_info, this->ptr(), this->ptr(), nullptr);
+
+    void* stagine_buffer_map = nullptr;
+    VeBufferBase staging_buffer{};
+    VkBufferCreateInfo buffer_info{};
+    buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    buffer_info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    buffer_info.size = pixels_data.size;
+    VmaAllocationCreateInfo buffer_alloc_info{};
+    buffer_alloc_info.usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
+    buffer_alloc_info.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+    vmaCreateBuffer(device_layer, &buffer_info, &buffer_alloc_info, &staging_buffer, &staging_buffer, nullptr);
+
+    vmaMapMemory(device_layer, staging_buffer, &stagine_buffer_map);
+    memcpy(stagine_buffer_map, pixels_data.pixels, pixels_data.size);
+    vmaUnmapMemory(device_layer, staging_buffer);
+    free_pixel(pixels_data);
+}
+
+void VeTextureBase::destroy(VeDeviceLayer device_layer)
+{
 }
