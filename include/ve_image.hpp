@@ -30,8 +30,10 @@ struct VeTextureBase : public VeImageBase
 
   public:
     static VkSampler default_sampler;
-    static void set_default_sampler(VkDevice device);
+    static void create_default_sampler(VkDevice device);
+    static void destroy_default_sampler(VkDevice device);
 
+    VkDescriptorImageInfo image_info;
     VeImagePixels pixels_data{};
     VeTextureBase(const std::string& file_name);
 

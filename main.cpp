@@ -544,9 +544,10 @@ int main(int argc, char** argv)
     VeMouseTracker mouse_tracker;
     mouse_tracker.init(base_layer);
 
-    VeTextureBase::set_default_sampler(device_layer);
+    VeTextureBase::create_default_sampler(device_layer);
     VeTextureBase texture_test("texture.jpg");
     texture_test.create(device_layer, cmd_pool);
+    texture_test.create_image_view(device_layer);
 
     while (!glfwWindowShouldClose(base_layer))
     {
@@ -705,6 +706,7 @@ int main(int argc, char** argv)
     record1.destroy(device_layer);
     record2.destroy(device_layer);
 
+    VeTextureBase::destroy_default_sampler(device_layer);
     texture_test.destroy(device_layer);
 
     for (auto framebuffer : framebuffers)

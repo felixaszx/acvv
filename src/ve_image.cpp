@@ -104,7 +104,7 @@ void VeTextureBase::transit_to_shader(VeDeviceLayer device_layer, VkCommandPool 
 
 VkSampler VeTextureBase::default_sampler = VK_NULL_HANDLE;
 
-void VeTextureBase::set_default_sampler(VkDevice device)
+void VeTextureBase::create_default_sampler(VkDevice device)
 {
     VkSamplerCreateInfo sampler_info{};
     sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -131,9 +131,18 @@ void VeTextureBase::set_default_sampler(VkDevice device)
     vkCreateSampler(device, &sampler_info, nullptr, &default_sampler);
 }
 
+void VeTextureBase::destroy_default_sampler(VkDevice device)
+{
+    vkDestroySampler(device, default_sampler, nullptr);
+}
+
 VeTextureBase::VeTextureBase(const std::string& file_name)
 {
     pixels_data = load_pixel(file_name, STBI_rgb_alpha);
+
+    image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    image_info.imageView = *this;
+    image_info.sampler = default_sampler;
 }
 
 void VeTextureBase::create(VeDeviceLayer device_layer, VkCommandPool pool)
