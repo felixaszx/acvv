@@ -544,6 +544,9 @@ int main(int argc, char** argv)
     VeMouseTracker mouse_tracker;
     mouse_tracker.init(base_layer);
 
+    VeTextureBase texture_test("texture.jpg");
+    texture_test.create(device_layer, cmd_pool);
+
     while (!glfwWindowShouldClose(base_layer))
     {
         timer.start();
@@ -700,6 +703,8 @@ int main(int argc, char** argv)
     record0.destroy(device_layer);
     record1.destroy(device_layer);
     record2.destroy(device_layer);
+
+    texture_test.destroy(device_layer);
 
     for (auto framebuffer : framebuffers)
     {

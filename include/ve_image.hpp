@@ -24,7 +24,7 @@ void free_pixel(VeImagePixels& pixel_data);
 struct VeTextureBase : public VeImageBase
 {
   private:
-    void copy_buffer_to_image(VeDeviceLayer device_layer, VkCommandPool pool);
+    void copy_buffer_to_image(VkBuffer buffer,VeDeviceLayer device_layer, VkCommandPool pool);
     void transit_to_dst(VeDeviceLayer device_layer, VkCommandPool pool);
     void transit_to_shader(VeDeviceLayer device_layer, VkCommandPool pool);
 
