@@ -23,11 +23,11 @@ layout(location = 0) out struct
 
 void main()
 {
-    vec4 final_position = ubo.proj * ubo.view * instance_model * vec4(position, 1.0);
-    frag_data.position = final_position.xyz;
+    vec4 world_position = instance_model * vec4(position, 1.0);
+    frag_data.position = world_position.xyz;
     frag_data.normal = normalize(mat3(transpose(inverse(instance_model))) * normal);
     frag_data.uv = uv;
     frag_data.color = color;
 
-    gl_Position = final_position;
+    gl_Position = ubo.proj * ubo.view * world_position;
 }

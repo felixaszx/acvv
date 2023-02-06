@@ -22,5 +22,23 @@ light_data;
 
 void main()
 {
-    light_result = subpassLoad(normal);
+    vec3 frag_color = subpassLoad(albedo).rgb;
+    vec3 frag_pos = subpassLoad(position).rgb;
+    vec3 normal = normalize(subpassLoad(normal).rgb);
+    vec3 view_dir = normalize(light_data.camera_pos.xyz - frag_pos);
+    vec3 light_dir = normalize(light_data.position.xyz - frag_pos);
+    vec3 half_way = normalize(light_dir + view_dir);
+
+    float diff = max(dot(normal, light_dir), 0.0);
+    float spec = pow(max(dot(normal, half_way), 0.0), 32.0);
+
+    float dist = length(light_data.position.xyz - frag_pos);
+    float attenuation = 1.0 / (light_data.constant + light_data.linear * dist + light_data.quadratic * (dist * dist));
+
+    vec3 ambient = frag_color * 0.1;
+    vec3 diffuse = diff * frag_color;
+    vec3 specular = spec * frag_color;
+
+    light_result =
+        vec4(light_data.color.xyz * attenuation * light_data.strength * (ambient + diffuse + specular), 1.0f);
 }

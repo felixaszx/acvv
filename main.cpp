@@ -490,7 +490,7 @@ int main(int argc, char** argv)
 
     LightPushConstants light_data{};
     light_data.color = glm::vec4(1, 1, 1, 1);
-    light_data.position = glm::vec4(0, 1, 0, 1);
+    light_data.position = glm::vec4(0, 0, 0, 1);
     light_data.strength = 1.0f;
     light_data.constant = 1;
     light_data.linear = 0.09;
@@ -592,7 +592,7 @@ int main(int argc, char** argv)
             }
         }
 
-        ccc.instances_[0] = glm::rotate(glm::mat4(1.0f), glm::radians(5.0f) * timer.since_init_second(), {0, 1, 0}) *
+        ccc.instances_[0] = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f) * timer.since_init_second(), {0, 1, 0}) *
                             glm::scale(glm::mat4(1.0f), {0.1f, 0.1f, 0.1f});
         ccc.update();
         camera.update(swapchain.extend_);
