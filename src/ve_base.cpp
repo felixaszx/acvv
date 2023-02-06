@@ -232,7 +232,7 @@ uint32_t VeCpuTimer::get_duration_ms()
     return std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
 }
 
-VeMouseTracker::VeMouseTracker(GLFWwindow* window)
+void VeMouseTracker::init(GLFWwindow* window)
 {
     glfwGetCursorPos(window, &last_x, &last_y);
 }

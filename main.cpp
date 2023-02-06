@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#define VE_ENABLE_VALIDATIONh
+#define VE_ENABLE_VALIDATION
 #include "ve_base.hpp"
 #include "ve_device.hpp"
 #include "ve_image.hpp"
@@ -541,12 +541,14 @@ int main(int argc, char** argv)
 
     // main loop
     VeCpuTimer timer;
-    VeMouseTracker mouse_tracker((GLFWwindow*)base_layer);
+    VeMouseTracker mouse_tracker;
+    mouse_tracker.init(base_layer);
 
     while (!glfwWindowShouldClose(base_layer))
     {
+        timer.start();
         glfwPollEvents();
-        mouse_tracker.update((GLFWwindow*)base_layer);
+        mouse_tracker.update(base_layer);
 
         {
             float speed = 1.0f;
@@ -686,6 +688,7 @@ int main(int argc, char** argv)
         vkQueuePresentKHR(device_layer.present_queue_, &present_info);
 
         vkDeviceWaitIdle(device_layer);
+        timer.finish();
     }
 
     record0.terminate();

@@ -51,7 +51,7 @@ class VeMouseTracker
         float y = 0;
     };
 
-    VeMouseTracker(GLFWwindow* window);
+    void init(GLFWwindow* window);
 
     void update(GLFWwindow* window);
     VeMousePosition2D get_last_position();
