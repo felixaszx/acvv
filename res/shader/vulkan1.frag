@@ -22,42 +22,5 @@ light_data;
 
 void main()
 {
-    if (light_data.constant == 1)
-    {
-        vec3 frag_pos = subpassLoad(position).rgb;
-        vec3 frag_normal = subpassLoad(normal).rgb;
-        vec3 frag_color = subpassLoad(albedo).rgb;
-        vec3 view_dir = normalize(light_data.camera_pos.xyz - frag_pos);
-        vec3 light_dir = normalize(light_data.position.xyz - frag_pos);
-
-        vec3 half_way = normalize(light_dir + view_dir);
-        float spec = pow(max(dot(frag_normal, half_way), 0.0), 32.0);
-
-        float dist = length(light_data.position.xyz - frag_pos);
-        float attenuation = 1.0 / (light_data.constant + light_data.linear * dist + light_data.quadratic * dist * dist);
-
-        vec3 ambient = frag_color * 0.1;
-        vec3 diffuse = max(dot(frag_normal, light_dir), 0.0) * frag_color;
-        vec3 specular = spec * frag_color;
-
-        light_result =
-            vec4(light_data.color.rgb * light_data.strength * attenuation * (specular + diffuse + ambient), 1.0);
-    }
-    else
-    {
-        vec3 frag_pos = subpassLoad(position).rgb;
-        vec3 frag_normal = subpassLoad(normal).rgb;
-        vec3 frag_color = subpassLoad(albedo).rgb;
-        vec3 view_dir = normalize(light_data.camera_pos.xyz - frag_pos);
-        vec3 light_dir = -normalize(light_data.direction).xyz;
-
-        vec3 half_way = normalize(light_dir + view_dir);
-        float spec = pow(max(dot(frag_normal, half_way), 0.0), 32.0);
-
-        vec3 ambient = frag_color * 0.1;
-        vec3 diffuse = max(dot(frag_normal, light_dir), 0.0) * frag_color;
-        vec3 specular = spec * frag_color;
-
-        light_result = vec4(light_data.color.rgb * light_data.strength * (specular + diffuse + ambient), 1.0);
-    }
+    light_result = subpassLoad(normal);
 }

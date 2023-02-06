@@ -489,10 +489,9 @@ int main(int argc, char** argv)
     camera.create(device_layer);
 
     LightPushConstants light_data{};
-    light_data.camera_pos = glm::vec4(camera.position, 1.0f);
     light_data.color = glm::vec4(1, 1, 1, 1);
-    light_data.position = glm::vec4(0, 10, 0, 1);
-    light_data.strength = 100.0f;
+    light_data.position = glm::vec4(0, 1, 0, 1);
+    light_data.strength = 1.0f;
     light_data.constant = 1;
     light_data.linear = 0.09;
     light_data.quadratic = 0.032;
@@ -541,11 +540,69 @@ int main(int argc, char** argv)
 
     // main loop
     VeCpuTimer timer;
+    double m_x = 0;
+    double m_y = 0;
+    glfwGetCursorPos(base_layer, &m_x, &m_y);
+    double m_x_p = m_x;
+    double m_y_p = m_y;
+
     while (!glfwWindowShouldClose(base_layer))
     {
         glfwPollEvents();
+        glfwGetCursorPos(base_layer, &m_x, &m_y);
+
+        {
+            float speed = 1.0f;
+            if (camera.pitch > 79.0f)
+            {
+                camera.pitch = 79.0f;
+            }
+            else if (camera.pitch < -79.0f)
+            {
+                camera.pitch = -79.0f;
+            }
+            else
+            {
+                camera.pitch -= static_cast<float>((m_y - m_y_p) * speed);
+            }
+
+            camera.yaw -= static_cast<float>((m_x - m_x_p) * speed);
+
+            m_x_p = m_x;
+            m_y_p = m_y;
+        }
+        {
+            float speed = 1.0f;
+            if (glfwGetKey(base_layer, GLFW_KEY_W) == GLFW_PRESS)
+            {
+                camera.position += speed * camera.front;
+            }
+            if (glfwGetKey(base_layer, GLFW_KEY_S) == GLFW_PRESS)
+            {
+                camera.position -= speed * camera.front;
+            }
+            if (glfwGetKey(base_layer, GLFW_KEY_D) == GLFW_PRESS)
+            {
+                camera.position += speed * camera.right();
+            }
+            if (glfwGetKey(base_layer, GLFW_KEY_A) == GLFW_PRESS)
+            {
+                camera.position -= speed * camera.right();
+            }
+            if (glfwGetKey(base_layer, GLFW_KEY_SPACE) == GLFW_PRESS)
+            {
+                camera.position += speed * camera.up;
+            }
+            if (glfwGetKey(base_layer, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            {
+                camera.position -= speed * camera.up;
+            }
+        }
+
+        ccc.instances_[0] = glm::scale(glm::mat4(1.0f), {0.1f, 0.1f, 0.1f});
         ccc.update();
         camera.update(swapchain.extend_);
+        light_data.camera_pos = glm::vec4(camera.position, 1.0f);
 
         auto result = vkWaitForFences(device_layer, 1, &frame_fence, VK_TRUE, UINT64_MAX);
         if (result != VK_SUCCESS)
@@ -555,8 +612,6 @@ int main(int argc, char** argv)
         uint32_t image_index = 0;
         vkAcquireNextImageKHR(device_layer, swapchain, UINT64_MAX, image_semaphore, VK_NULL_HANDLE, &image_index);
         vkResetFences(device_layer, 1, &frame_fence);
-
-        ccc.instances_[0] = glm::rotate(glm::mat4(1.0f), glm::radians(5.0f * timer.since_init_second()), {0, 1, 0});
 
         VkWriteDescriptorSet write{};
         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

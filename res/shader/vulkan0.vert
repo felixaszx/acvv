@@ -25,7 +25,7 @@ void main()
 {
     vec4 final_position = ubo.proj * ubo.view * instance_model * vec4(position, 1.0);
     frag_data.position = final_position.xyz;
-    frag_data.normal = mat3(transpose(inverse(instance_model))) *normal;
+    frag_data.normal = mat3(transpose(inverse(instance_model))) * normal;
     frag_data.uv = uv;
     frag_data.color = color;
 
