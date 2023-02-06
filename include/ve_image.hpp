@@ -24,16 +24,20 @@ void free_pixel(VeImagePixels& pixel_data);
 struct VeTextureBase : public VeImageBase
 {
   private:
-    void copy_buffer_to_image(VkBuffer buffer,VeDeviceLayer device_layer, VkCommandPool pool);
+    void copy_buffer_to_image(VkBuffer buffer, VeDeviceLayer device_layer, VkCommandPool pool);
     void transit_to_dst(VeDeviceLayer device_layer, VkCommandPool pool);
     void transit_to_shader(VeDeviceLayer device_layer, VkCommandPool pool);
 
   public:
+    static VkSampler default_sampler;
+    static void set_default_sampler(VkDevice device);
+
     VeImagePixels pixels_data{};
     VeTextureBase(const std::string& file_name);
 
     void create(VeDeviceLayer device_layer, VkCommandPool pool);
     void destroy(VeDeviceLayer device_layer);
+    void create_image_view(VkDevice device);
 };
 
 #endif // VE_IMAGE_HPP

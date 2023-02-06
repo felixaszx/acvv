@@ -102,6 +102,35 @@ void VeTextureBase::transit_to_shader(VeDeviceLayer device_layer, VkCommandPool 
     cmd.end(device_layer, pool);
 }
 
+VkSampler VeTextureBase::default_sampler = VK_NULL_HANDLE;
+
+void VeTextureBase::set_default_sampler(VkDevice device)
+{
+    VkSamplerCreateInfo sampler_info{};
+    sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    sampler_info.magFilter = VK_FILTER_LINEAR;
+    sampler_info.minFilter = VK_FILTER_LINEAR;
+
+    sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+
+    sampler_info.anisotropyEnable = VK_TRUE;
+    sampler_info.maxAnisotropy = 4.0f;
+    sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    sampler_info.unnormalizedCoordinates = VK_FALSE;
+
+    sampler_info.compareEnable = VK_FALSE;
+    sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
+
+    sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    sampler_info.mipLodBias = 0.0f;
+    sampler_info.minLod = 0.0f;
+    sampler_info.maxLod = 0.0f;
+
+    vkCreateSampler(device, &sampler_info, nullptr, &default_sampler);
+}
+
 VeTextureBase::VeTextureBase(const std::string& file_name)
 {
     pixels_data = load_pixel(file_name, STBI_rgb_alpha);
@@ -153,5 +182,21 @@ void VeTextureBase::create(VeDeviceLayer device_layer, VkCommandPool pool)
 
 void VeTextureBase::destroy(VeDeviceLayer device_layer)
 {
+    vkDestroyImageView(device_layer, *this, nullptr);
     vmaDestroyImage(device_layer, *this, *this);
+}
+
+void VeTextureBase::create_image_view(VkDevice device)
+{
+    VkImageViewCreateInfo view_info{};
+    view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    view_info.image = *this;
+    view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    view_info.format = VK_FORMAT_R8G8B8A8_SRGB;
+    view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    view_info.subresourceRange.baseMipLevel = 0;
+    view_info.subresourceRange.levelCount = 1;
+    view_info.subresourceRange.baseArrayLayer = 0;
+    view_info.subresourceRange.layerCount = 1;
+    vkCreateImageView(device, &view_info, nullptr, this->ptr());
 }

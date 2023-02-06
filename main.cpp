@@ -544,6 +544,7 @@ int main(int argc, char** argv)
     VeMouseTracker mouse_tracker;
     mouse_tracker.init(base_layer);
 
+    VeTextureBase::set_default_sampler(device_layer);
     VeTextureBase texture_test("texture.jpg");
     texture_test.create(device_layer, cmd_pool);
 
