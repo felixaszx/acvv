@@ -18,27 +18,44 @@ layout(push_constant) uniform constants
     float linear;
     float quadratic;
 }
-light_data;
+light;
 
 void main()
 {
     vec3 frag_color = subpassLoad(albedo).rgb;
     vec3 frag_pos = subpassLoad(position).rgb;
     vec3 normal = normalize(subpassLoad(normal).rgb);
-    vec3 view_dir = normalize(light_data.camera_pos.xyz - frag_pos);
-    vec3 light_dir = normalize(light_data.position.xyz - frag_pos);
-    vec3 half_way = normalize(light_dir + view_dir);
+    vec3 view_dir = normalize(light.camera_pos.xyz - frag_pos);
 
-    float diff = max(dot(normal, light_dir), 0.0);
-    float spec = pow(max(dot(normal, half_way), 0.0), 32.0);
+    if (light.constant > 0.5)
+    {
+        vec3 light_dir = normalize(light.position.xyz - frag_pos);
+        vec3 half_way = normalize(light_dir + view_dir);
 
-    float dist = length(light_data.position.xyz - frag_pos);
-    float attenuation = 1.0 / (light_data.constant + light_data.linear * dist + light_data.quadratic * (dist * dist));
+        float diff = max(dot(normal, light_dir), 0.0);
+        float spec = pow(max(dot(normal, half_way), 0.0), 32.0);
 
-    vec3 ambient = frag_color * 0.1;
-    vec3 diffuse = diff * frag_color;
-    vec3 specular = spec * frag_color;
+        float dist = length(light.position.xyz - frag_pos);
+        float attenuation = 1.0 / (light.constant + light.linear * dist + light.quadratic * (dist * dist));
 
-    light_result =
-        vec4(light_data.color.xyz * attenuation * light_data.strength * (ambient + diffuse + specular), 1.0f);
+        vec3 ambient = frag_color * 0.1;
+        vec3 diffuse = diff * frag_color;
+        vec3 specular = spec * frag_color;
+
+        light_result = vec4(light.color.xyz * attenuation * light.strength * (ambient + diffuse + specular), 1.0);
+    }
+    else
+    {
+        vec3 light_dir = normalize(-light.direction.xyz);
+        vec3 half_way = normalize(light_dir + view_dir);
+
+        float diff = max(dot(normal, light_dir), 0.0);
+        float spec = pow(max(dot(normal, half_way), 0.0), 32.0);
+
+        vec3 ambient = frag_color * 0.1;
+        vec3 diffuse = diff * frag_color;
+        vec3 specular = spec * frag_color;
+
+        light_result = vec4(light.color.xyz * light.strength * (ambient + diffuse + specular), 1.0);
+    }
 }

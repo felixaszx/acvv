@@ -491,6 +491,7 @@ int main(int argc, char** argv)
     LightPushConstants light_data{};
     light_data.color = glm::vec4(1, 1, 1, 1);
     light_data.position = glm::vec4(0, 0, 0, 1);
+    light_data.direction = glm::vec4(-1, -1, 0, 1);
     light_data.strength = 1.0f;
     light_data.constant = 1;
     light_data.linear = 0.09;
