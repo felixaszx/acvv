@@ -36,6 +36,29 @@ class VeCpuTimer
     uint32_t get_duration_ms();
 };
 
+class VeMouseTracker
+{
+  private:
+    double last_x = 0;
+    double last_y = 0;
+    double this_x = 0;
+    double this_y = 0;
+
+  public:
+    struct VeMousePosition2D
+    {
+        float x = 0;
+        float y = 0;
+    };
+
+    VeMouseTracker(GLFWwindow* window);
+
+    void update(GLFWwindow* window);
+    VeMousePosition2D get_last_position();
+    VeMousePosition2D get_this_position();
+    VeMousePosition2D get_delta_position();
+};
+
 #ifdef VE_ENABLE_VALIDATION
 #define ATTRIB_ENABLE_VALIDATION true
 #else

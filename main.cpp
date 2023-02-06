@@ -540,17 +540,13 @@ int main(int argc, char** argv)
 
     // main loop
     VeCpuTimer timer;
-    double m_x = 0;
-    double m_y = 0;
-    glfwGetCursorPos(base_layer, &m_x, &m_y);
-    double m_x_p = m_x;
-    double m_y_p = m_y;
+    VeMouseTracker mouse_tracker((GLFWwindow*)base_layer);
 
     while (!glfwWindowShouldClose(base_layer))
     {
         glfwPollEvents();
-        
-        glfwGetCursorPos(base_layer, &m_x, &m_y);
+        mouse_tracker.update((GLFWwindow*)base_layer);
+
         {
             float speed = 1.0f;
             if (camera.pitch > 79.0f)
@@ -563,13 +559,10 @@ int main(int argc, char** argv)
             }
             else
             {
-                camera.pitch -= static_cast<float>((m_y - m_y_p) * speed);
+                camera.pitch -= mouse_tracker.get_delta_position().y;
             }
 
-            camera.yaw -= static_cast<float>((m_x - m_x_p) * speed);
-
-            m_x_p = m_x;
-            m_y_p = m_y;
+            camera.yaw -= mouse_tracker.get_delta_position().x;
         }
         {
             float speed = 1.0f;

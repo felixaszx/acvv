@@ -231,3 +231,30 @@ uint32_t VeCpuTimer::get_duration_ms()
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
 }
+
+VeMouseTracker::VeMouseTracker(GLFWwindow* window)
+{
+    glfwGetCursorPos(window, &last_x, &last_y);
+}
+
+void VeMouseTracker::update(GLFWwindow* window)
+{
+    last_x = this_x;
+    last_y = this_y;
+    glfwGetCursorPos(window, &this_x, &this_y);
+}
+
+VeMouseTracker::VeMousePosition2D VeMouseTracker::get_last_position()
+{
+    return {casts(float, last_x), casts(float, last_y)};
+}
+
+VeMouseTracker::VeMousePosition2D VeMouseTracker::get_this_position()
+{
+    return {casts(float, this_x), casts(float, this_y)};
+}
+
+VeMouseTracker::VeMousePosition2D VeMouseTracker::get_delta_position()
+{
+    return {casts(float, this_x - last_x), casts(float, this_y - last_y)};
+}
