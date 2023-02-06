@@ -591,6 +591,10 @@ int main(int argc, char** argv)
             {
                 camera.position -= speed * camera.up;
             }
+            if (glfwGetKey(base_layer, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            {
+                glfwSetWindowShouldClose(base_layer, true);
+            }
         }
 
         ccc.instances_[0] = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f) * timer.since_init_second(), {0, 1, 0}) *
