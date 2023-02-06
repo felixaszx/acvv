@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#define VE_ENABLE_VALIDATION
+#define VE_ENABLE_VALIDATIONh
 #include "ve_base.hpp"
 #include "ve_device.hpp"
 #include "ve_image.hpp"
@@ -10,14 +10,9 @@
 #include "ve_cmd.hpp"
 #include "ve_graphic_pipeline.hpp"
 #include "ve_mesh.hpp"
+#include "ve_camera.hpp"
 
 #include "glms.hpp"
-
-struct UniformBuffer
-{
-    glm::mat4 view;
-    glm::mat4 proj;
-};
 
 struct LightPushConstants
 {
@@ -156,26 +151,6 @@ int main(int argc, char** argv)
     render_pass_info.pDependencies = dependencies;
     VkRenderPass render_pass;
     vkCreateRenderPass(device_layer, &render_pass_info, nullptr, &render_pass);
-
-    UniformBuffer ubo{};
-    ubo.view = glm::lookAt(glm::vec3(0.0f, 80.0f, 0.0f), glm::vec3(0.0f, 80.0f, 0.0f) + glm::vec3(0.0f, 0.0f, 1.0f),
-                           glm::vec3(0.0f, 1.0f, 0.0f));
-    ubo.proj = glm::perspective(glm::radians(45.0f),                                       //
-                                swapchain.extend_.width / (float)swapchain.extend_.height, //
-                                0.1f, 1000.0f);
-    ubo.proj[1][1] *= -1;
-    void* ubo_map = nullptr;
-    VeBufferBase uniform_buffer;
-    VkBufferCreateInfo ubo_info{};
-    ubo_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    ubo_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    ubo_info.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-    ubo_info.size = sizeof(ubo);
-    VmaAllocationCreateInfo ubo_alloc_info{};
-    ubo_alloc_info.usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
-    ubo_alloc_info.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
-    vmaCreateBuffer(device_layer, &ubo_info, &ubo_alloc_info, &uniform_buffer, &uniform_buffer, nullptr);
-    vmaMapMemory(device_layer, uniform_buffer, &ubo_map);
 
     VkDescriptorSetLayout set_layouts[3]{};
     VkDescriptorSet descriptor_sets[3]{};
@@ -509,8 +484,12 @@ int main(int argc, char** argv)
     image_write.pImageInfo = &descriptor_image_info;
     vkUpdateDescriptorSets(device_layer, 1, &image_write, 0, nullptr);
 
+    VeCameraBase camera{};
+    camera.position = {0, 80, 0};
+    camera.create(device_layer);
+
     LightPushConstants light_data{};
-    light_data.camera_pos = glm::vec4(0.0f, 80.0f, 0.0f, 1.0f);
+    light_data.camera_pos = glm::vec4(camera.position, 1.0f);
     light_data.color = glm::vec4(1, 1, 1, 1);
     light_data.position = glm::vec4(0, 10, 0, 1);
     light_data.strength = 100.0f;
@@ -566,6 +545,7 @@ int main(int argc, char** argv)
     {
         glfwPollEvents();
         ccc.update();
+        camera.update(swapchain.extend_);
 
         auto result = vkWaitForFences(device_layer, 1, &frame_fence, VK_TRUE, UINT64_MAX);
         if (result != VK_SUCCESS)
@@ -577,19 +557,14 @@ int main(int argc, char** argv)
         vkResetFences(device_layer, 1, &frame_fence);
 
         ccc.instances_[0] = glm::rotate(glm::mat4(1.0f), glm::radians(5.0f * timer.since_init_second()), {0, 1, 0});
-        memcpy(ubo_map, &ubo, sizeof(ubo));
 
-        VkDescriptorBufferInfo buffer_info{};
-        buffer_info.buffer = uniform_buffer;
-        buffer_info.offset = 0;
-        buffer_info.range = VK_WHOLE_SIZE;
         VkWriteDescriptorSet write{};
         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write.dstSet = descriptor_sets[0];
         write.dstBinding = 0;
         write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         write.descriptorCount = 1;
-        write.pBufferInfo = &buffer_info;
+        write.pBufferInfo = &camera.descriptor_buffer_info;
         vkUpdateDescriptorSets(device_layer, 1, &write, 0, nullptr);
 
         VkCommandBufferInheritanceInfo iifo{};
@@ -669,14 +644,12 @@ int main(int argc, char** argv)
     record1.destroy(device_layer);
     record2.destroy(device_layer);
 
-    vmaUnmapMemory(device_layer, uniform_buffer);
-    vmaDestroyBuffer(device_layer, uniform_buffer, uniform_buffer);
-
     for (auto framebuffer : framebuffers)
     {
         vkDestroyFramebuffer(device_layer, framebuffer, nullptr);
     }
 
+    camera.destroy(device_layer);
     cmd_pool.destroy(device_layer);
     image_semaphore.destroy(device_layer);
     submit_semaphore.destroy(device_layer);
