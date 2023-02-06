@@ -549,8 +549,8 @@ int main(int argc, char** argv)
     while (!glfwWindowShouldClose(base_layer))
     {
         glfwPollEvents();
+        
         glfwGetCursorPos(base_layer, &m_x, &m_y);
-
         {
             float speed = 1.0f;
             if (camera.pitch > 79.0f)
