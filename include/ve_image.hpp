@@ -19,7 +19,7 @@ struct VeImagePixels
 VeImagePixels load_pixel(const std::string file_name, uint32_t channel);
 void free_pixel(VeImagePixels& pixel_data);
 
-struct VePixelImageBase : public VeImageBase
+struct VeTextureBase : public VeImageBase
 {
     VeImagePixels pixels_data;
 };
