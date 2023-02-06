@@ -158,14 +158,14 @@ void VeMesh::draw(VkCommandBuffer cmd)
         vkCmdBindVertexBuffers(cmd, 0, 2, vertex_buffers, vert_offsets);
         vkCmdBindIndexBuffer(cmd, index_buffer_, indices_buffer_offsets_[i] * sizeof(uint32_t), VK_INDEX_TYPE_UINT32);
 
-        vkCmdDrawIndexed(cmd, indices_count_[i], update_size, 0, 0, 0);
+        vkCmdDrawIndexed(cmd, indices_count_[i], update_size_, 0, 0, 0);
     }
 }
 
 void VeMesh::update()
 {
-    update_size = instance_count < MAX_INSTANCE ? instance_count : MAX_INSTANCE;
-    memcpy(instance_mapping_, instances_.data(), update_size * sizeof(glm::mat4));
+    update_size_ = instance_count_ < MAX_INSTANCE ? instance_count_ : MAX_INSTANCE;
+    memcpy(instance_mapping_, instances_.data(), update_size_ * sizeof(glm::mat4));
 }
 
 void VeMesh::destroy(VeDeviceLayer device_layer)

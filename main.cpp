@@ -41,7 +41,7 @@ int main(int argc, char** argv)
 
     VeMesh ccc("res/model/sponza/sponza.obj", 100);
     ccc.create(device_layer);
-    ccc.instance_count = 1;
+    ccc.instance_count_ = 1;
 
     std::vector<VkExtent2D> extends(5, swapchain.extend_);
     std::vector<VkSampleCountFlagBits> samples(5, VK_SAMPLE_COUNT_1_BIT);

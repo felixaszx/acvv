@@ -30,11 +30,11 @@ class VeMesh
 
     void* instance_mapping_ = nullptr;
     VeBufferBase instance_buffer_{};
-    uint32_t update_size = 1;
+    uint32_t update_size_ = 1;
 
   public:
     const uint32_t MAX_INSTANCE;
-    uint32_t instance_count = 1;
+    uint32_t instance_count_ = 1;
     std::vector<glm::mat4> instances_{};
 
     VeMesh(const std::string file_path, uint32_t max_instance);
