@@ -91,7 +91,7 @@ void VeMesh::create(VeDeviceLayer device_layer)
     instance_buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     instance_buffer_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     instance_buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    instance_buffer_info.size = indices_.size() * sizeof(uint32_t);
+    instance_buffer_info.size = MAX_INSTANCE * sizeof(glm::mat4);
     VmaAllocationCreateInfo instance_alloc_info{};
     instance_alloc_info.usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
     instance_alloc_info.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
