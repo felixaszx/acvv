@@ -18,7 +18,6 @@ class VeMesh
 {
   private:
     VeBufferBase vert_buffer_{};
-    VeBufferBase vert_buffer_INSTANCE_{};
     std::vector<VeMeshVertex> vertices_{};
 
     VeBufferBase index_buffer_{};
