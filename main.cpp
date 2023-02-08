@@ -485,7 +485,7 @@ int main(int argc, char** argv)
     vkUpdateDescriptorSets(device_layer, 1, &image_write, 0, nullptr);
 
     VeCameraBase camera{};
-    camera.position = {0, 80, 0};
+    camera.position = {0, 20, 0};
     camera.create(device_layer);
 
     LightPushConstants light_data{};
