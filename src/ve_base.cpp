@@ -234,7 +234,7 @@ uint32_t VeCpuTimer::get_duration_ms()
 
 void VeMouseTracker::init(GLFWwindow* window)
 {
-    glfwGetCursorPos(window, &last_x, &last_y);
+    glfwGetCursorPos(window, &this_x, &this_y);
 }
 
 void VeMouseTracker::update(GLFWwindow* window)
