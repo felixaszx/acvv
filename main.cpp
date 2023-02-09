@@ -604,8 +604,7 @@ int main(int argc, char** argv)
             }
         }
 
-        ccc.instances_[0] = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f) * timer.since_init_second(), {0, 1, 0}) *
-                            glm::scale(glm::mat4(1.0f), {0.1f, 0.1f, 0.1f});
+        ccc.instances_[0] = glm::scale(glm::mat4(1.0f), {0.1f, 0.1f, 0.1f});
         ccc.update();
         camera.update(swapchain.extend_);
         light_data.camera_pos = glm::vec4(camera.position, 1.0f);
