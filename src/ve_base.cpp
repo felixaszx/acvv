@@ -30,7 +30,7 @@ void VeBaseLayer::create(const std::string& name)
     app_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     app_info.pEngineName = "ve";
     app_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    app_info.apiVersion = VK_VERSION_1_3;
+    app_info.apiVersion = VK_API_VERSION_1_3;
 
     VkDebugUtilsMessengerCreateInfoEXT debug_utils_creat_info{};
     debug_utils_creat_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;

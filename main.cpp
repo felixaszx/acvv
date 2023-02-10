@@ -668,7 +668,7 @@ int main(int argc, char** argv)
 
         vkCmdEndRenderPass(cmd);
         vkEndCommandBuffer(cmd);
-
+        
         VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
         VkSubmitInfo submit_info{};
         submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
